@@ -15,7 +15,7 @@ LIB = \
       -lm
 
 OBJ = \
-      obj/tools_solution.o
+      obj/tools.o
 MAIN = \
        obj/main.o
 
