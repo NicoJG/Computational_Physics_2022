@@ -10,14 +10,14 @@ throughout the course.
 
 Functions that are to be written
 
--   elementwise_addition
--   elementwise_multiplication
--   dot_product
--   create_2D_array
--   destroy_2D_array
--   matrix_multiplcation
--   vector_norm
--   normalize_vector
--   average
--   standard_deviation
--   distance_between_vectors
+* `elementwise_addition`
+* `elementwise_multiplication`
+* `dot_product`
+* `create_2D_array`
+* `destroy_2D_array`
+* `matrix_multiplcation`
+* `vector_norm`
+* `normalize_vector`
+* `average`
+* `standard_deviation`
+* `distance_between_vectors`
