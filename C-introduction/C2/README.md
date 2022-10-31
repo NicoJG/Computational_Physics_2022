@@ -34,6 +34,14 @@ This should work on other Linux computers as well, however, some package manager
 have it in their repositories.
 This script does not work on Mac or Windows computers, however!
 
+There is example code how to generate random numbers using GSL in the file
+gsl_example.c.
+compile as
+
+```
+gcc gsl_example.c -lgsl -lcblas -O0 -o gsl_example
+```
+
 Introduction
 ===
 In this exercise you will have to start coding yourself, the program that you
