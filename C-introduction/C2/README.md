@@ -119,5 +119,5 @@ Use GSL to generate a large array filled with random numbers drawn from the
 uniform distribution on [0,1].
 Write the array to a file and import the data into Python and make
 a histogram to verify that the distribution is indeed uniform.
-Using the template Makefile located in this repo to simplify linking
+Use the template Makefile located in this repo to link
 the GSL libraries.
