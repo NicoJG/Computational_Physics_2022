@@ -39,7 +39,7 @@ gsl_example.c.
 compile as
 
 ```
-gcc gsl_example.c -lgsl -lcblas -O0 -o gsl_example
+gcc gsl_example.c -lgsl -lgslcblas -O0 -o gsl_example
 ```
 
 Introduction
