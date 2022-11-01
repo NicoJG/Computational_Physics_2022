@@ -1,10 +1,12 @@
 #include <string.h> //memset
+#include <stdlib.h>
 #include <stdio.h>
 
 int *
 return_stack()
 {
-    int array[100];
+    //int array[100];
+    int *array = (int *)malloc(sizeof(int) * 100);
     for(int i = 0; i < 100; ++i){
        array[i] = i;
     }
