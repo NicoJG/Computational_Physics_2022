@@ -68,7 +68,7 @@ int main()
      * to 0
      *
      * ****************************************************/ 
-    printf("\nIncorrectly initalized heap array\n");
+    printf("\nCorrectly initalized heap array\n");
     for(int i = 0; i < 5; ++i){
 	int *arr_heap = calloc(9000, sizeof(int));
     	int sum_b = 0;
