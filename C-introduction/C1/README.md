@@ -128,7 +128,7 @@ For example, the first line in the code block below should be read as
 ```
 int *line;
 ```
-The dereference operator, &, is used to get the address of a variable.
+The operator, &, gets the address of a variable.
 ```
 int b = 2;
 int *c = &b;
