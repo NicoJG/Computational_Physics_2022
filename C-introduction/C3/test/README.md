@@ -97,6 +97,9 @@ The project is structured as follows:
     -   `test.mk` holds extra information for the makefile which is
         needed to compile the test
 
+Note that you may need to add -lm and -lsubunit to LIB if you installed
+the check through apt on Linux.
+
 Valid targets for the makefile are:
 
 -   make program

@@ -8,9 +8,7 @@ CFLAGS += \
 	-Iunit-test/include/ \
 	-O0
 LIB += \
-     -lcheck \
-     -lsubunit \
-     -lm
+     -lcheck
 
 
 test: obj run-test
