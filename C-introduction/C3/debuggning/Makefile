@@ -14,6 +14,7 @@ CFLAGS_ADDRESS = \
 CFLAGS = \
 	-Werror \
 	-pedantic \
+	-g \
 	-O0
 
 
