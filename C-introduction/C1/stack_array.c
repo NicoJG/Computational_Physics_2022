@@ -31,5 +31,7 @@ main()
 	printf("%i\n", array[i]);
     }
 
+    free(array);
+
     return 0;
 }

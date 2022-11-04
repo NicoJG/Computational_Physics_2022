@@ -1,0 +1,18 @@
+CC ?= gcc # c-compiler
+CFLAGS = # compiler flags such as -O3 -W
+LIBS = -lm -lgsl -lgslcblas # libraries such as -lm -lgsl -lgslcblas
+
+CFILES = linalg.c main.c # C source files to compile
+PYFILES = plot_hist.py
+PROGRAM = program # name of executable to be built
+OUTPUTS = random_numbers_hist.pdf
+
+all: $(CFILES) plot_hist.py
+	$(CC) -o $(PROGRAM) $(CFILES) $(CFLAGS) $(LIBS)
+	./$(PROGRAM)
+	python $(PYFILES)
+
+FORCE:
+
+clean: FORCE
+	rm $(PROGRAM) $(OUTPUTS)

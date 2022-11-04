@@ -78,5 +78,11 @@ int main(){
 
     gsl_rng_free(rng);
 
+    // free all dynamically created arrays
+    free(vec1);
+    free(vec2);
+    free(vec3);
+    free(mat1);
+
     return 0;
 }
