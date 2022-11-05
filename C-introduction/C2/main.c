@@ -32,12 +32,18 @@ int main(){
     // calculate and print the scalar product
     printf("vec1*vec2 = %4f\n", scalar_product(vec1, vec2, length));
 
-    // dynamically allocate a nxm array by having pointers on pointers
+    // dynamically allocate a nxm array by having pointers to pointers
     int n = length;
     int m = 3;
-    double** mat1 = (double**)calloc(n, sizeof(double*));
+    double* linear_mat1 = (double*) malloc(n*m * sizeof(double));
+    double** mat1 = (double**) malloc(n * sizeof(double*));
     for (int i = 0; i < n; i++)
-        mat1[i] = (double*)calloc(m, sizeof(double));
+        mat1[i] = linear_mat1 + m * i;
+
+    // other possibility (no linear storage):
+    //double** mat1 = (double**)calloc(n, sizeof(double*));
+    //for (int i = 0; i < n; i++)
+    //    mat1[i] = (double*)calloc(m, sizeof(double));
 
     // initialize the matrix
     for(int i=0;i<n;i++){
@@ -82,8 +88,10 @@ int main(){
     free(vec1);
     free(vec2);
     free(vec3);
-    for (int i = 0; i < n; i++)
-        free(mat1[i]);
+    //for (int i = 0; i < n; i++)
+    //    free(mat1[i]);
+    //free(mat1);
+    free(linear_mat1);
     free(mat1);
 
     return 0;
