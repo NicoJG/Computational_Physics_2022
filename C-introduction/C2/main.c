@@ -82,6 +82,8 @@ int main(){
     free(vec1);
     free(vec2);
     free(vec3);
+    for (int i = 0; i < n; i++)
+        free(mat1[i]);
     free(mat1);
 
     return 0;

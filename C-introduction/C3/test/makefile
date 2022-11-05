@@ -7,7 +7,7 @@ CFLAGS = \
 	 -Wall \
 	 -Werror \
 	 -g \
-	 -Iinclude
+	 -Iinclude 
 OBJ = \
       obj/vector.o
 MAIN = \
@@ -16,6 +16,10 @@ MAIN = \
 CFLAGS_OPT = \
 	     -O2 \
 	     -march=native
+
+# for math.h
+LIB += \
+     -lm
 
 ifeq ($(MAKECMDGOALS),test)
 -include unit-test/test.mk

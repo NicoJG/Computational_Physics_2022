@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "test_main.h"
 
 #include "vector.h"
@@ -269,6 +270,94 @@ START_TEST(test_dot_product_properties)
     }
 }
 
+/* *****************************************
+ * Added by me:
+ * 
+ * Test the L2_norm function
+ */
+START_TEST(test_L2_norm)
+{
+    // Test vectors
+    double v1[] = {0., 0., 0.}; // |v1|=0
+    double v2[] = {1., 2., 3., 4.}; // |v2|=sqrt(30)=5.477225575...
+
+    // expected answers
+    double expected1 = 0.;
+    double expected2 = sqrt(30);
+
+    // length of both vectors
+    const unsigned int ndims1 = sizeof(v1)/sizeof(v1[0]);
+    const unsigned int ndims2 = sizeof(v2)/sizeof(v2[0]);
+
+    // Calculate the L2 norms
+    double answer1 = L2_norm(v1, ndims1);
+    double answer2 = L2_norm(v2, ndims2);
+
+    // Now test! Is the calculated answer (test answer) equal to the known answer?
+    ck_assert_double_eq_tol(answer1, expected1, 1e-10);
+    ck_assert_double_eq_tol(answer2, expected2, 1e-10);
+}
+
+START_TEST(test_L2_norm_properties)
+{
+    // L2 norm properties:
+    // https://builtin.com/data-science/vector-norms
+
+    // Since this test is done with random input vectors,
+    // repeat it 100 times
+    for (int i = 0; i < 100; i++) {
+
+        // Vectors to hold the inputs and results
+        double v1[5] = {0};
+        double v2[5] = {0};
+        double a1;
+        double a2;
+        double left;
+        double right;
+        double tmp[5] = {0};
+        const unsigned int ndims = sizeof(v1)/sizeof(v1[0]);
+
+        // Generate two random vectors of length 5
+        write_random_vector(-100.0, 100.0, v1, ndims);
+        write_random_vector(-100.0, 100.0, v2, ndims);
+
+        // Generate two random numbers
+        write_random_vector(-100.0, 100.0, &a1, 1);
+        write_random_vector(-100.0, 100.0, &a2, 1);
+
+        // calculate the L2 norms:
+        double norm1 = L2_norm(v1, ndims);
+        double norm2 = L2_norm(v2, ndims);
+
+        // Test non-negativity: |v|>0 with =0 only if v=0
+        ck_assert_double_gt(norm1, 0.);
+        ck_assert_double_gt(norm2, 0.);
+
+        // Test triangle inequality: |v1 + v2| <= |v1| + |v2|
+        elementwise_addition(tmp, v1, v2, ndims);
+        left = L2_norm(tmp, ndims);
+        right = norm1 + norm2;
+        ck_assert_double_le_tol(left, right, 1e-10);
+
+        // Debug printing:
+        // printf("a1 = %.10f\n", a1);
+        // printf(" |v1| = %.10f\n", norm1);
+        // for(int i=0;i<ndims;i++)
+        //     printf("v1[%i] = %.10f\n", i, v1[i]);
+
+        // Test homogeneity: |a*v| = |a|*|v|
+        constant_multiplication(tmp, v1, a1, ndims);
+        left = L2_norm(tmp, ndims);
+        right = fabs(a1) * norm1; // not abs() !! thats only for int
+        ck_assert_double_eq_tol(left, right, 1e-10);
+
+        constant_multiplication(tmp, v2, a2, ndims);
+        left = L2_norm(tmp, ndims);
+        right = fabs(a2) * norm2;
+        ck_assert_double_eq_tol(left, right, 1e-10);
+    }
+}
+
 int
 main()
 {
@@ -288,7 +377,21 @@ main()
     add_test(test_constant_multiplication_properties);
     add_test(test_dot_product_properties);
 
+    // My tests:
+    add_test(test_L2_norm);
+    add_test(test_L2_norm_properties);
+
     // Runs the tests and the teardown function and frees some data //
     test_teardown();
     return 0;
 }
+
+
+/*
+ * Running suite(s): testing
+ * 33%: Checks: 6, Failures: 4, Errors: 0
+ * unit-test/src/test_main.c:76:F:core:test_elementwise_addition:0: Assertion 'fabsl(12. - answer[0]) < 1e-10' failed: answer[0] == 2, 12. == 12, 1e-10 == 1e-10
+ * unit-test/src/test_main.c:131:F:core:test_dot_product:0: Assertion 'fabsl(154. - answer) < 1e-10' failed: answer == 99, 154. == 154, 1e-10 == 1e-10
+ * unit-test/src/test_main.c:169:F:core:test_elementwise_addition_properties:0: Assertion 'fabsl((right)[__i] - (left)[__i]) < (1e-10)' failed: (left)[__i] == -186.612, (right)[__i] == -99.9486, (1e-10) == 1e-10
+ * unit-test/src/test_main.c:268:F:core:test_dot_product_properties:0: Assertion 'fabsl(right - left) < 1e-10' failed: left == 11163.7, right == 10202.4, 1e-10 == 1e-10
+ */

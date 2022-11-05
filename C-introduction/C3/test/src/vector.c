@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "vector.h"
 
@@ -11,7 +12,8 @@ elementwise_addition(
 	            )
 {
     for(int i = 0; i < len; ++i){
-	res[i] = v1[i] + v1[i];
+	// res[i] = v1[i] + v1[i]; //!! v2 instead of v1
+	res[i] = v1[i] + v2[i];
     }
 }
 
@@ -37,7 +39,23 @@ dot_product(
 {
     double result = 0;
     for(int i = 0; i < len; ++i){
-	result = v1[i] * v2[i];
+		//result = v1[i] * v2[i]; //!! += instead of =
+		result += v1[i] * v2[i];
     }
+    return result;
+}
+
+// Added by me:
+double
+L2_norm(
+	    double *v1,
+	    unsigned int len
+	   )
+{
+    double result = 0;
+    for(int i = 0; i < len; ++i){
+		result += v1[i] * v1[i];
+    }
+	result = sqrt(result);
     return result;
 }

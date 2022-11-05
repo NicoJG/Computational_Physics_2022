@@ -47,3 +47,17 @@ dot_product(
 	    double *v2,
 	    unsigned int len
 	   );
+
+/* **********************************************
+ * Added by me:
+ * 
+ * Calculate the L2 norm of a vector
+ *
+ * the result is returned as a double
+ *
+ * **********************************************/
+double
+L2_norm(
+	    double *v1,
+	    unsigned int len
+	   );
