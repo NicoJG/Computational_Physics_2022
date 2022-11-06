@@ -11,9 +11,11 @@ CFLAGS_ADDRESS = \
 	 	 -fsanitize=address \
 		 -fno-omit-frame-pointer
 
+# -g was missing
 CFLAGS = \
 	-Werror \
 	-pedantic \
+	-g \
 	-O0
 
 
@@ -25,5 +27,11 @@ gdb: clean
 
 clean:
 	find . -name '*.o' -exec rm -rf {} \;
-	rm -rf gbd address
+	rm -rf gdb address address_example
+
+# Added:
+address_example: address_example.c
+	gcc -g -fsanitize=address -fno-omit-frame-pointer address_example.c -o address_example
+	./address_example
+	rm address_example
 

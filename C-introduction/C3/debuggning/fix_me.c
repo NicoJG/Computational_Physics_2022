@@ -18,8 +18,8 @@ double *linspace(double start, double end, int number_of_points)
     double dx = fabs((start-end) / (number_of_points-1));
 
     // Fill array
-    for(int n = 1; n <= number_of_points; n++){
-	data[n] = start + n*dx;
+    for(int n = 0; n < number_of_points; n++){ // start at 0 not 1 and end with < instead of <=
+	    data[n] = start + n*dx; // heap-buffer-overflow 
     }
     return data;
 }
@@ -37,8 +37,8 @@ double integrate(double *data, int number_of_points, double dx)
     double sum = 0;
 
     // carry out the trapezodial integral
-    for(int n = 0; n < number_of_points; n++){
-	sum += (data[n - 1]+ data[n])*dx / 2;
+    for(int n = 1; n < number_of_points; n++){ // start at 1 not 0
+	sum += (data[n - 1]+ data[n])*dx / 2; // if n=0, n-1=-1 => dynamic-stack-buffer-overflow
     }
     return sum;
 }
@@ -52,10 +52,10 @@ void absolute_cube_function(double *data, double *points, int number_of_points)
 {
     // fill array with |x^3|
     for(int n = 0; n < number_of_points; n++){
-	data[n] = pow(points[n], 3);
-	if (points[n] < 0){
-	    data[n] = fabs(data[n]);
-	}
+	    data[n] = pow(points[n], 3);
+	    if (points[n] < 0){
+	        data[n] = fabs(data[n]);
+	    }
     }
 }
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 	   "The code is broken so please fix it.\n");
     // Setup linspace for integration
     int number_of_points = 10000;
-    int start = -4, end = 4;
+    double start = -4, end = 4; // double instead of int (because of division), else dx=0
     double *points = linspace(start, end, number_of_points);
 
     // calculate dx for integral
@@ -81,6 +81,8 @@ int main(int argc, char **argv)
     printf("Integration of |x\u00B3| from -4 to 4 %f\n"
 	   "The result should be 127.999664 \n",
 	   integrand);
+
+    free(points); // LeakSanitizer: detected memory leaks (at line 15)
 
     return 0;
 }
