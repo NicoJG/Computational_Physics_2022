@@ -7,7 +7,7 @@
  * @end end value of array
  * @number_of_points points in array
  *
- * @data returns dynamically allocated array (remeber to free it)
+ * @data returns dynamically allocated array (remember to free it)
  */
 double *linspace(double start, double end, int number_of_points)
 {
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     // Integrate function
     double integrand = integrate(data, number_of_points, dx);
     printf("Integration of |x\u00B3| from -4 to 4 %f\n"
-	   "The result should be 127.999664 \n",
+	   "The result should be close to 128 \n",
 	   integrand);
 
     free(points); // LeakSanitizer: detected memory leaks (at line 15)

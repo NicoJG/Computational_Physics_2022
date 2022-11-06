@@ -215,6 +215,6 @@ To run for gdb compile with
 
 ```
 make gdb
-gdb ./main
+gdb ./gdb
 ```
 

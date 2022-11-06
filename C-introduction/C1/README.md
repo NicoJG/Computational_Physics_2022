@@ -128,7 +128,7 @@ For example, the first line in the code block below should be read as
 ```
 int *line;
 ```
-The dereference operator, &, is used to get the address of a variable.
+The operator, &, gets the address of a variable.
 ```
 int b = 2;
 int *c = &b;
@@ -284,7 +284,7 @@ Try to fix the code by using the heap instead (see heap.c).
 
 Compile and run the program:
 ```
-gcc -O0 stack_array -o stack_array && ./return_stack_array
+gcc -O0 stack_array.c -o stack_array && ./stack_array
 ```
 
 Uninitialized data

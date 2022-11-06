@@ -8,7 +8,7 @@ main()
     /* A pointer to a pointer */
     int **ppm = &pm;
 
-    printf("m = %i\n", m + 1);
+    printf("m + 1 = %i\n", m + 1);
     printf("(*pm) + 1 = %i\n", (*pm) + 1);
     printf("pm = %p\n", pm);
     printf("*(&m) + 1 = %i\n", *(&m) + 1);

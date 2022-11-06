@@ -34,6 +34,14 @@ This should work on other Linux computers as well, however, some package manager
 have it in their repositories.
 This script does not work on Mac or Windows computers, however!
 
+There is example code how to generate random numbers using GSL in the file
+gsl_example.c.
+compile as
+
+```
+gcc gsl_example.c -lgsl -lgslcblas -O0 -o gsl_example
+```
+
 Introduction
 ===
 In this exercise you will have to start coding yourself, the program that you
@@ -111,5 +119,5 @@ Use GSL to generate a large array filled with random numbers drawn from the
 uniform distribution on [0,1].
 Write the array to a file and import the data into Python and make
 a histogram to verify that the distribution is indeed uniform.
-Using the template Makefile located in this repo to simplify linking
+Use the template Makefile located in this repo to link
 the GSL libraries.
