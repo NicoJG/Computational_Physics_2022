@@ -4,6 +4,20 @@
 
 #include "linalg.h"
 
+double** allocate_2D_array(int n, int m){
+    double* linear_mat1 = (double*) malloc(n*m * sizeof(double));
+    double** mat1 = (double**) malloc(n * sizeof(double*));
+    for (int i = 0; i < n; i++)
+        mat1[i] = linear_mat1 + m * i;
+
+    // other possibility (no linear storage):
+    //double** mat1 = (double**)calloc(n, sizeof(double*));
+    //for (int i = 0; i < n; i++)
+    //    mat1[i] = (double*)calloc(m, sizeof(double));
+
+    return mat1;
+}
+
 // execution: runc main.c linalg.c -lm -lgsl -lgslcblas && python plot_hist.py
 
 int main(){
@@ -35,15 +49,8 @@ int main(){
     // dynamically allocate a nxm array by having pointers to pointers
     int n = length;
     int m = 3;
-    double* linear_mat1 = (double*) malloc(n*m * sizeof(double));
-    double** mat1 = (double**) malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++)
-        mat1[i] = linear_mat1 + m * i;
-
-    // other possibility (no linear storage):
-    //double** mat1 = (double**)calloc(n, sizeof(double*));
-    //for (int i = 0; i < n; i++)
-    //    mat1[i] = (double*)calloc(m, sizeof(double));
+    
+    double** mat1 = allocate_2D_array(n,m);
 
     // initialize the matrix
     for(int i=0;i<n;i++){
@@ -91,7 +98,7 @@ int main(){
     //for (int i = 0; i < n; i++)
     //    free(mat1[i]);
     //free(mat1);
-    free(linear_mat1);
+    free(mat1[0]);
     free(mat1);
 
     return 0;
