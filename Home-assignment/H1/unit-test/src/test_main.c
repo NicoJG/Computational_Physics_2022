@@ -1,6 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*****************************************************************************
+ * Add your functions that you wanna test here (from, e.g., src/run.c.)
+ *
+ * Example:
+ *
+ * extern void get_structure_factor(...);
+ *
+ * ***************************************************************************/
+
 #include "test_main.h"
 
 /* ************************************
