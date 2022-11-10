@@ -26,5 +26,4 @@ install() {
 
 install
 
-echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH/.local/"  >> "$HOME/.bashrc"
-source "$HOME/.bashrc"
+source .bashrc
