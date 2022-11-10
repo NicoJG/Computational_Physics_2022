@@ -42,6 +42,15 @@ double *generate_signal(double *signal, double *t, uint64_t len_t, double a,
     return signal;
 }
 
+double *generate_signal_2(double *signal, double *t, uint64_t len_t, double a1, double a2, double f1, double f2, double phi1, double phi2)
+{
+    for(int i = 0; i < len_t; i++){
+	    signal[i] = a1 * cos(2 * PI * f1 * t[i] + phi1);
+	    signal[i] += a2 * cos(2 * PI * f2 * t[i] + phi2);
+    }
+    return signal;
+}
+
 /*
  * constructs time array
  * @array - array to be filled with time values
@@ -75,13 +84,18 @@ void write_to_file(char *fname, double *time_array,
 
 int main()
 {
-    int N = 250; double dt = 0.1;
+    int N = 250; double dt = 0.05; //*(250./1000.)
     double a = 1; double f = 2; double phi = 0;
     double time_array[N];
     arange(time_array, 0, N, dt);
+
+    // for task 4:
+    double a1 = 1; double f1 = 2; double phi1 = 0;
+    double a2 = 1; double f2 = 6; double phi2 = 0;
     
     double signal[N];
-    generate_signal(signal, time_array, N, a, f, phi);
+    //generate_signal(signal, time_array, N, a, f, phi);
+    generate_signal_2(signal, time_array, N, a1, a2, f1, f2, phi1, phi2);
     write_to_file("signal.csv", time_array, signal, N);
     return 0;
 }

@@ -16,6 +16,8 @@ CFLAGS = \
 	-Werror \
 	-pedantic \
 	-g \
+	-fsanitize=address \
+	-fno-omit-frame-pointer \
 	-O0
 
 

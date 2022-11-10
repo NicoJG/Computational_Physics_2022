@@ -22,8 +22,8 @@
 /*************************************************************
  * Macro defines
  *************************************************************/
-#define N_POINTS 250
-#define dt 0.1
+#define N_POINTS 250 //1000
+#define dt 0.05 //*(250./1000.)
 
 /******************************************************************************
  * Helper functions
@@ -103,6 +103,11 @@ int main(int argc, char **argv)
      */
     double fftd_data[N_POINTS];
     powerspectrum(signal, fftd_data, N_POINTS);
+
+    // Shift the fft frequencies
+    fft_freq_shift(frequencies, dt, N_POINTS);
+    powerspectrum_shift(fftd_data, N_POINTS);
+
     /*
      * Dump fft and frequencies to file
      */
