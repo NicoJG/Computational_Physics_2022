@@ -301,5 +301,5 @@ This is something that might expect from other languages.__
 
 Compile and run the program:
 ```
-gcc -O0 uninitialized -o uninitialized && ./uninitialized
+gcc -O0 uninitialized.c -o uninitialized && ./uninitialized
 ```
