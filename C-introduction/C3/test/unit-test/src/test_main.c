@@ -339,12 +339,6 @@ START_TEST(test_L2_norm_properties)
         right = norm1 + norm2;
         ck_assert_double_le_tol(left, right, 1e-10);
 
-        // Debug printing:
-        // printf("a1 = %.10f\n", a1);
-        // printf(" |v1| = %.10f\n", norm1);
-        // for(int i=0;i<ndims;i++)
-        //     printf("v1[%i] = %.10f\n", i, v1[i]);
-
         // Test homogeneity: |a*v| = |a|*|v|
         constant_multiplication(tmp, v1, a1, ndims);
         left = L2_norm(tmp, ndims);
