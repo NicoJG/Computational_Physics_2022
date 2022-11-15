@@ -74,7 +74,7 @@ void write_to_file(char *fname, double *frequencies,
 		   double *spectrum, int n_points)
 {
     FILE *fp = fopen(fname, "w");
-    fprintf(fp, "time, signal\n");
+    fprintf(fp, "frequency, powerspectrum\n");
     for(int i = 0; i < n_points; ++i){
 	    fprintf(fp, "%f,%f\n", frequencies[i], spectrum[i]);
     }
@@ -111,6 +111,6 @@ int main(int argc, char **argv)
     /*
      * Dump fft and frequencies to file
      */
-    write_to_file("powerspectrum.csv", fftd_data, frequencies, N_POINTS);
+    write_to_file("powerspectrum.csv", frequencies, fftd_data, N_POINTS);
     return 0;
 }

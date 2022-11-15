@@ -4,7 +4,7 @@ $$
 h(t) = a \cos(2 \pi f t + \phi)
 $$
 
-## 1) 
+## 1) different parameters, which functions do we obtain?
 - f=2, phi=0 => cosine with a lot of oscillations  
 <img src="images/signal_f2_phi0.png" width="500" height="400">  
 
@@ -15,7 +15,7 @@ $$
 
 - overall with N=250 the oscillations are not very smooth  
 
-## 2)
+## 2) FFT, Do you understand the spectrum?
 - using f=2, phi=0  
 - we get a power sectrum with peaks only at f=2 and f=8
 (same as figure 2)  
@@ -29,35 +29,42 @@ $$
 
 - real signals always have a double (mirrored) FFT (negative frequencies)  
 
-## 3)  
+## 3) More convenient to shift frequencies, why?
 - for f=2, phi=0, N=250 and shifted FFT frequencies:  
 <img src="images/powerspectrum_shift.png" width="500" height="400">  
-- this is more convenient, because now we have negative frequencies and not very large frequencies.  
-- cosine is symmetric around 0 => cos(x)=cos(-x)  
-- FFT is periodic in the frequencies  
-- Frequency range: $-f_c \leq 0 \leq f_c$ with $f_c = 1/(2 \Delta t) = 5$  
-- Frequency precision: $\Delta f = 1/(N \Delta t) = 1/t_\text{max} = 1/25 = 0.04$  
+- Why is it more convenient? Do you understand the frequency scale on the
+x-axis?  
+    - this is more convenient, because now we have negative frequencies and not very large frequencies.  
+    - cosine is symmetric around 0 => cos(x)=cos(-x)  
+    - FFT is periodic in the frequencies  
+- What are the minimum and maximum frequencies?
+    - Frequency range: $-f_c \leq 0 \leq f_c$ with $f_c = 1/(2 \Delta t) = 5$  
+    - Frequency precision: $\Delta f = 1/(N \Delta t) = 1/t_\text{max} = 1/25 = 0.04$  
 - N=253:  
 <img src="images/powerspectrum_N253.png" width="500" height="400">  
 - N=255:  
-<img src="images/powerspectrum_N255.png" width="500" height="400">  
+<img src="images/powerspectrum_N255.png" width="500" height="400">
+- Comment on the differences with N=250,253,255  
 - with a different number of samples, the frequencies may "leak out" of the single point of the correct frequency => noise in the fft  
 - Why?  
 
 ## 4)  
-- now we generate $h(t) = a_1 \cos(2 \pi f_1 t + \phi_1) + a_2 \cos(2 \pi f_2 t + \phi_2)$ with $a_1 = a_2 = 1, \phi_1 = \phi_2 = 0$ but $f_1 = 2$ and $f_2 = 6$ (and again $N=250, \Delta t=0.1$)  
-- Nyquist frequency is still $f_c = 1/(2 \Delta t) = 5$  
+- now we generate $h(t) = a_1 \cos(2 \pi f_1 t + \phi_1) + a_2 \cos(2 \pi f_2 t + \phi_2)$  
+- with $a_1 = a_2 = 1$ , $\phi_1 = \phi_2 = 0$ but $f_1 = 2$ and $f_2 = 6$ (and again $N=250, \Delta t=0.1$)  
+- What is the Nyquist frequency? Nyquist frequency is still $f_c = 1/(2 \Delta t) = 5$  
 - power spectrum:  
 <img src="images/powerspectrum_ex4.png" width="500" height="400">  
 - signal:  
 <img src="images/signal_ex4.png" width="500" height="400">  
-- now we see an additional peak at $f=\pm 4$, even though we have $f_2 = 6$  
-- our dt is to big to see $f=6$ => decrease dt to 0.05 so that $f_c = 10$:  
+- Do you understand the result? What is the problem here?  
+    - now we see an additional peak at $f=\pm 4$, even though we have $f_2 = 6$  
+- Can you modify the sampling in time domain so that you get a more correct representation of the power spectrum?   
+    - our dt is to big to see $f=6$ => decrease dt to 0.05 so that $f_c = 10$:  
 <img src="images/powerspectrum_ex4_dt0.05.png" width="500" height="400">  
 <img src="images/signal_ex4_dt0.05.png" width="500" height="400">  
 
 
-## 5)  
+## 5) 3 coupled oscillators with walls (Carbon)  
 - $H = \sum_{i=1}^{3} \frac{m v_i^2}{2} + \sum_{i=0}^{3} \frac{\kappa}{2}(q_{i+1}-q_i)^2$    
 - $m \frac{d^2}{dt^2} q_i(t) = \kappa [q_{i+1}(t) - 2q_i(t) + q_{i-1}(t)]$    
 - Velocity Verlet:  
@@ -65,25 +72,34 @@ $$
     - $q_i(t+\Delta t) = q_i(t) + v_i(t+\Delta t/2) \Delta t$  
     - calculate $a_i(t+\Delta t)$  
     - $v_i(t+\Delta t) = v_i(t + \Delta t /2) + \frac{1}{2} a_i(t+\Delta t) \Delta t$  
+    
+- Do you conserve total energy? Investigate by varying the timestep size.
+    - Energy is conserved but with less larger timesteps it oscillates  
+- Do we get an expected powerspectrum?
+    - Yes, the powerspectrum should have a maximum of 3 peaks (here, we have 2 active modes) 
+
 - with initial conditions $q_1(0) = 0.01 Å, q_2(0) = 0.005 Å, q_3(0) = -0.005 Å$ and $v_i(0)=0$:  
     - $N=1000$, $t_{max} = 0.25$:  
-    <img src="E1_5_N1000_tmax0.25.png" width="500" height="750">  
+    <img src="images/E1_5_N1000_tmax0.25.png" width="500" height="750">  
     - $N=100$, $t_{max} = 0.25$:  
-    <img src="E1_5_N100_tmax0.25.png" width="500" height="750">  
+    <img src="images/E1_5_N100_tmax0.25.png" width="500" height="750">  
     - $N=1000$, $t_{max} = 1$:  
-    <img src="E1_5_N1000_tmax1.png" width="500" height="750">  
-- Energy is conserved but with less larger timesteps it oscillates  
-- The powerspectrum should have a maximum of 3 peaks (we have 2 active modes)  
+    <img src="images/E1_5_N1000_tmax1.png" width="500" height="750">  
+ 
 
 
-## 6) 3 coupled oscillators without walls  
-<img src="E1_6_7_derivation.png" width="500" height="600">   
-<img src="E1_6.png" width="500" height="750">   
+## 6) 3 coupled oscillators without walls  (CO2)
+<img src="images/E1_6_7_derivation.png" width="500" height="600">   
+
+- N=1000 , t_max=0.25  
+<img src="images/E1_6_N1000_tmax0.25.png" width="500" height="750"> 
+- N=10000 , t_max=2.0  
+<img src="images/E1_6_N10000_tmax2.png" width="500" height="750">     
 
 - resonance frequencies: 0, (74-75.5) THz, (38.5-39.5) THz   
 - experimentally found resonances:  
     - wavenumbers $\nu$: 1388, 2349, 667 1/cm  
-    - frequency $f = c \nu$: 41.6112, 70.4212, 19.9962 THz   
+    - frequency $f = c \cdot \nu$:  41.6112, 70.4212, 19.9962 THz   
 https://en.wikipedia.org/wiki/Carbon_dioxide#Structure,_bonding_and_molecular_vibrations 
 
 ## 7)  
@@ -93,4 +109,4 @@ https://en.wikipedia.org/wiki/Carbon_dioxide#Structure,_bonding_and_molecular_vi
     - f_3 = 39.0508 THz  
 
 
-<img src="E1_7_derivation_freq.png" width="500" height="400"> 
+<img src="images/E1_7_derivation_freq.png" width="700" height="550"> 

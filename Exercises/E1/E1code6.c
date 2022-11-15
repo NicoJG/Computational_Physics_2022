@@ -148,8 +148,8 @@ void velocity_verlet(int n_timesteps, int n_particles,
  * Main function
  */
 int main(){
-    double t_max = 2.; // ps
-    int n_timesteps = 10000;
+    double t_max = 0.25; // ps
+    int n_timesteps = 1000;
     double dt = t_max/n_timesteps;
     int n_particles = 3;
 
