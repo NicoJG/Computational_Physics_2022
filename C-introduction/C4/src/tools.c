@@ -150,7 +150,7 @@ standard_deviation(
 	double mean = average(v1, len);
 	double res = 0;
 	for(int i=0;i<len;i++){
-		res += pow(fabs(v1[i] - mean), 2);
+		res += (v1[i] - mean)*(v1[i] - mean);
 	}
     return sqrt(res/len);
 }
@@ -165,7 +165,7 @@ distance_between_vectors(
 	// dist(v1,v2) = |v1 - v2|
 	double res = 0;
 	for(int i=0;i<len;i++){
-		res += pow(v1[i] - v2[i], 2);
+		res += (v1[i] - v2[i])*(v1[i] - v2[i]);
 	}
     return sqrt(res);
 }
