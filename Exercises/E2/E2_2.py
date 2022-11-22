@@ -21,7 +21,10 @@ E = data[:,1+4*n_particles:1+5*n_particles]
 
 print(p.shape)
 
+plt.plot(t,Q)
+plt.show()
+plt.plot(t,P)
+plt.show()
 plt.plot(t,E)
-plt.yscale("log")
 plt.show()
 # %%

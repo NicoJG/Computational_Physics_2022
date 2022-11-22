@@ -77,15 +77,11 @@ void velocity_verlet(double** u_out, double** p_out,
             v[j] += dt * 0.5 * a[j];
         }
         
-        /* Save the displacement of the atoms */
-        u_out[i][0] = q[0];
-        u_out[i][1] = q[1];
-        u_out[i][2] = q[2];
-
-        /* Save the momenta of the atoms */
-        p_out[i][0] = m*v[0];
-        p_out[i][1] = m*v[1];
-        p_out[i][2] = m*v[2];
+        /* Save the displacement and momentum of the atoms */
+        for(int j=0;j<n_particles;j++){
+            u_out[i][j] = q[j];
+            p_out[i][j] = m*v[j];
+        }
     }
 }
 
@@ -148,7 +144,8 @@ void calc_modal_energies(double** E_out,
                         double m, double kappa){
     for(int t_i=0;t_i<n_timesteps+1;t_i++){
         for(int k=0;k<n_particles;k++){
-            double omega_k = 2*sqrt(kappa/m)*sin(k*pi/(2*(n_particles+1)));
+            double omega_k = 2*sqrt(kappa/m)*sin((k+1)*pi/(2*(n_particles+1)));
+            printf("k=%i; omega=%.5e\n",k,omega_k);
             E_out[t_i][k] = 0.5*(P[t_i][k]*P[t_i][k] + omega_k*omega_k*Q[t_i][k]*Q[t_i][k]);
         }
     }
@@ -158,10 +155,10 @@ void calc_modal_energies(double** E_out,
 int main(){
     // simulation constants (dimensionless units)
     int n_particles = 32;
-    double t_max = 25000;
+    double t_max = 250;
     double dt = 0.1;
     int n_timesteps = t_max/dt;
-    printf("n_timesteps = %i",n_timesteps);
+    printf("n_timesteps = %i\n",n_timesteps);
 
     double m = 1;
     double kappa = 1;
