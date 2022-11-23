@@ -41,19 +41,19 @@ def plot_modal_energy(input_file, output_file, xrange_zoom):
     plt.tight_layout()
     plt.savefig(output_file)
     
-#print("Plot E2_2 ...")
-#plot_modal_energy("data/E2_2.csv", "images/E2_2.png", (0,1000))
-#
-#print("Plot E2_3_alpha0.01 ...")
-#plot_modal_energy("data/E2_3_alpha0.01.csv", "images/E2_3_alpha0.01.png", (0,1000))
-#print("Plot E2_3_alpha0.1 ...")
-#plot_modal_energy("data/E2_3_alpha0.1.csv", "images/E2_3_alpha0.1.png", (0,1000))
-#
-#print("Plot E2_4_alpha0.01 ...")
-#plot_modal_energy("data/E2_4_alpha0.01.csv", "images/E2_4_alpha0.01.png", (0,10000))
-#print("Plot E2_4_alpha0.1 ...")
-#plot_modal_energy("data/E2_4_alpha0.1.csv", "images/E2_4_alpha0.1.png", (0,10000))
-#print("Done.")
+print("Plot E2_2 ...")
+plot_modal_energy("data/E2_2.csv", "images/E2_2.png", (0,1000))
+
+print("Plot E2_3_alpha0.01 ...")
+plot_modal_energy("data/E2_3_alpha0.01.csv", "images/E2_3_alpha0.01.png", (0,1000))
+print("Plot E2_3_alpha0.1 ...")
+plot_modal_energy("data/E2_3_alpha0.1.csv", "images/E2_3_alpha0.1.png", (0,1000))
+
+print("Plot E2_4_alpha0.01 ...")
+plot_modal_energy("data/E2_4_alpha0.01.csv", "images/E2_4_alpha0.01.png", (0,10000))
+print("Plot E2_4_alpha0.1 ...")
+plot_modal_energy("data/E2_4_alpha0.1.csv", "images/E2_4_alpha0.1.png", (0,10000))
+print("Done.")
 # %%
 from scipy.integrate import cumulative_trapezoid
 
@@ -79,6 +79,8 @@ def plot_time_average(input_file, output_file):
     plt.ylabel("time average of the modal energy / arb. units")
     plt.savefig(output_file)
     
+print("Plot E2_4_average_alpha0.01 ...")
 plot_time_average("data/E2_4_alpha0.01.csv", "images/E2_4_average_alpha0.01.png")
+print("Plot E2_4_average_alpha0.1 ...")
 plot_time_average("data/E2_4_alpha0.1.csv", "images/E2_4_average_alpha0.1.png")
     
