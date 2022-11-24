@@ -54,9 +54,8 @@ dot_product(
     return res;
 }
 
-void
+double**
 create_2D_array(
-		double ***array,
 		unsigned int nrows,
 		unsigned int ncols
 	       )
@@ -64,11 +63,12 @@ create_2D_array(
 	// allocate 1D array of doubles containing the whole matrix
 	double* linear_array = (double*)malloc(nrows*ncols*sizeof(double));
 	// allocate 1D array of pointers to doubles containing the pointers to each row starting point
-	*array = (double**)malloc(nrows*sizeof(double*));
+	double** array = (double**)malloc(nrows*sizeof(double*));
 	// let each row pointer point to the correct address
 	for(int row=0;row<nrows;row++){
-		(*array)[row] = linear_array + row*ncols;
+		array[row] = linear_array + row*ncols;
 	}
+	return array;
 }
 
 void

@@ -28,7 +28,13 @@ else
 CFLAGS += $(CFLAGS_OPT)
 endif
 
+all: H1 plots/H1_1.pdf | data plots
+
+plots/H1_1.pdf: data/H1_1.csv
+	python python/task1.py
+
 H1: obj _H1
+	./H1
 
 _H1: $(MAIN) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
@@ -38,6 +44,12 @@ obj/%.o: src/%.c
 
 obj:
 	mkdir -p obj
+
+data:
+	mkdir -p data
+
+plots:
+	mkdir -p plots
 
 clean:
 	find -iname "*.o" -exec rm {} \;
