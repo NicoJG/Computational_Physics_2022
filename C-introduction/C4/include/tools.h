@@ -1,3 +1,6 @@
+#pragma once
+#include <stdio.h>
+
 /* **********************************************
  *
  * Multiply vector v1 by scalar a1
@@ -160,3 +163,10 @@ distance_between_vectors(
 			 double *v2,
 			 unsigned int len
 	                );
+
+
+
+void print_vector(double* vec, int length);
+void print_matrix(double** mat, int n, int m);
+void fprint_vector(FILE* file, double* vec, int length);
+void fprint_matrix(FILE* file, double** mat, int n, int m);

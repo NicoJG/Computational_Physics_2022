@@ -125,26 +125,7 @@ void velocity_verlet(double* t_out, double** E_out, double* u0, double* p0,
     calc_acc(a, q, m, kappa, alpha, n_particles);
 
     for (int i = 1; i < n_timesteps + 1; i++) {
-        /* v(t+dt/2) */
-        for (int j = 0; j < n_particles; j++) {
-            v[j] += dt * 0.5 * a[j];
-        }
         
-        /* q(t+dt) */
-        for (int j = 0; j < n_particles; j++) {
-            q[j] += dt * v[j];
-        }
-        
-        /* a(t+dt) */
-        calc_acc(a, q, m, kappa, alpha, n_particles);
-        
-        /* v(t+dt) */
-        for (int j = 0; j < n_particles; j++) {
-            v[j] += dt * 0.5 * a[j];
-        }
-
-        //increase the time
-        t += dt;
 
         // check if this timestep should be skipped (E2_4)
         // (save the last timestep regardless of the skip counter)

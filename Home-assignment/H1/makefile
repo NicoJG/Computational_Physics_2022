@@ -1,8 +1,13 @@
 CC = gcc
 
 CFLAGS = \
-	 -g \
 	 -Iinclude
+
+CFLAGS_debug = \
+	-g \
+	-fsanitize=address \
+	-fno-omit-frame-pointer \
+	-O0
 
 CFLAGS_OPT = \
 	     -O2 \
@@ -25,13 +30,16 @@ ifeq ($(MAKECMDGOALS),test)
 OBJ_TEST = $(patsubst obj/%.o,obj_test/%.o,$(OBJ))
 -include unit-test/test.mk
 else
-CFLAGS += $(CFLAGS_OPT)
+CFLAGS += $(CFLAGS_OPT) 
 endif
 
-all: H1 plots/H1_1.pdf | data plots
+all: H1 plots/H1_1.pdf plots/H1_2_small_enough.pdf | data plots
 
 plots/H1_1.pdf: data/H1_1.csv
 	python python/task1.py
+
+plots/H1_2_small_enough.pdf: data/H1_2_small_enough.csv
+	python python/task2.py
 
 H1: obj _H1
 	./H1
