@@ -33,13 +33,18 @@ else
 CFLAGS += $(CFLAGS_OPT) 
 endif
 
-all: H1 plots/H1_1.pdf plots/H1_2_small_enough.pdf | data plots
+all: H1 plotting | data plots
 
-plots/H1_1.pdf: data/H1_1.csv
+plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_temp_scaling.pdf
+
+plots/H1_1.pdf: data/H1_1.csv python/task1.py
 	python python/task1.py
 
-plots/H1_2_small_enough.pdf: data/H1_2_small_enough.csv
+plots/H1_2_small_enough.pdf: data/H1_2_small_enough.csv python/task2.py
 	python python/task2.py
+
+plots/H1_3_temp_scaling.pdf: data/H1_3_temp_scaling.csv python/task3.py
+	python python/task3.py
 
 H1: obj _H1
 	./H1
