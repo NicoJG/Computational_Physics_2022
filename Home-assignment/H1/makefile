@@ -10,7 +10,7 @@ CFLAGS_debug = \
 	-O0
 
 CFLAGS_OPT = \
-	     -O2 \
+	     -O3 \
 	     -march=native
 
 LIB = \
@@ -35,7 +35,7 @@ endif
 
 all: H1 plotting | data plots
 
-plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_temp_scaling.pdf
+plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_equilibration.pdf plots/H1_4_equilibration.pdf
 
 plots/H1_1.pdf: data/H1_1.csv python/task1.py
 	python python/task1.py
@@ -43,8 +43,11 @@ plots/H1_1.pdf: data/H1_1.csv python/task1.py
 plots/H1_2_small_enough.pdf: data/H1_2_small_enough.csv python/task2.py
 	python python/task2.py
 
-plots/H1_3_temp_scaling.pdf: data/H1_3_temp_scaling.csv python/task3.py
+plots/H1_3_equilibration.pdf: data/H1_3_temp_scaling.csv python/task3.py
 	python python/task3.py
+
+plots/H1_4_equilibration.pdf: data/H1_4_temp_scaling.csv python/task4.py
+	python python/task4.py
 
 H1: obj _H1
 	./H1

@@ -11,13 +11,13 @@ const double eV = 1.602176634e-19; // J
 const double m_asu = 9649; // u
 const double m_asu_kg = 1.6028e-23; // kg
 const double GPa = 1e-21 / eV; // eV/Å^3
-const double bar = 1e-4 / GPa; // eV/Å^3
+const double bar = 1e-4 * GPa; // eV/Å^3
 const double celsius = 273.15; // K
 
 // Simulation/Physics constants
 const double m = 26.98153853 / m_asu; // m_asu (https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=Al)
 const double k_B = 8.617333262e-5; // eV/K (https://en.wikipedia.org/wiki/Boltzmann_constant#Value_in_different_units)
-const double kappa_T = 0.01385 * GPa; // Å^3/eV https://www.knowledgedoor.com/2/elements_handbook/isothermal_compressibility.html
+const double kappa_T = 0.01385 / GPa; // Å^3/eV https://www.knowledgedoor.com/2/elements_handbook/isothermal_compressibility.html
 const int n_cells = 4; // number of unit cells
 const int n_atoms = 4*n_cells*n_cells*n_cells;
 
@@ -74,21 +74,31 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
                             char* filename, 
                             int n_timesteps, double dt, double* a0,
                             double temp_scaling_time, double T_desired, 
-                            double pressure_scaling_time, double P_desired){
+                            double pressure_scaling_time, double P_desired,
+                            int n_save_positions){
     // if the scaling times are <= 0 then no corresponding scaling happens (no equilibration)
 
-    double t_max = (n_timesteps+1)*dt;
+    double run_time = (n_timesteps+1)*dt;
 
     // prepare output file
     FILE* file = fopen(filename, "w");
-    fprintf(file, "# {\"dt\": %.5e, \"n_timesteps\": %i, \"t_max\": %.5e, \n",dt, n_timesteps, t_max);
+    fprintf(file, "# {\"dt\": %.5e, \"n_timesteps\": %i, \"run_time\": %.5e, \n",dt, n_timesteps, run_time);
     fprintf(file, "# \"temp_scaling_time\": %.5e, \"T_desired\": %.5e, \n", temp_scaling_time, T_desired);
-    fprintf(file, "# \"pressure_scaling_time\": %.5e, \"P_desired\": %.5e}\n", pressure_scaling_time, P_desired);
-    fprintf(file, "# t[ps], E_pot[eV], E_kin[eV], T[K], P[eV/Å^3], a0[Å]\n");
+    fprintf(file, "# \"pressure_scaling_time\": %.5e, \"P_desired\": %.5e, \n", pressure_scaling_time, P_desired/bar);
+    fprintf(file, "# \"n_save_positions\": %i}\n", n_save_positions);
+
+    // table header
+    fprintf(file, "# t[ps], E_pot[eV], E_kin[eV], T[K], P[bar], a0[Å]");
+    for(int j=0;j<n_save_positions;j++){
+        fprintf(file, ", x_1[Å]");
+        fprintf(file, ", y_1[Å]");
+        fprintf(file, ", z_1[Å]");
+    }
+    fprintf(file, "\n");
 
     // velocity verlet:
     printf("Simulate \"%s\"...\n", filename);
-    printf("dt = %.5e ; n_timesteps = %i ; t_max = %.5f\n", dt, n_timesteps, t_max);
+    printf("dt = %.5e ; n_timesteps = %i ; run_time = %.5f\n", dt, n_timesteps, run_time);
 
     double a0_ = *a0;
 
@@ -150,14 +160,17 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
         }
 
         // calculate the instantaneaous properties (temperature, pressure)
-        T = (1/(3*n_atoms*k_B)) * E_kin;
-        P = E_kin;
-        for(int j=0;j<n_atoms;j++){
-            P += pos[j][0]*F[j][0]/2;
-            P += pos[j][1]*F[j][1]/2;
-            P += pos[j][2]*F[j][2]/2;
-        }
-        P *= 2/(3*L_box*L_box*L_box);
+        T = (2/(3*n_atoms*k_B)) * E_kin;
+
+        P = (n_atoms * k_B * T + get_virial_AL(pos, L_box, n_atoms)) / (L_box*L_box*L_box);
+
+        //P = E_kin;
+        //for(int j=0;j<n_atoms;j++){
+        //    P += pos[j][0]*F[j][0] * 0.5;
+        //    P += pos[j][1]*F[j][1] * 0.5;
+        //    P += pos[j][2]*F[j][2] * 0.5;
+        //}
+        //P *= 2/(3*L_box*L_box*L_box);
 
         if(temp_scaling_time > 0){
             // equilibration scaling(temperature)
@@ -181,8 +194,16 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
             a0_ *= alpha_P_cbrt;
         }
 
+        P = P / bar; // GPa 
+
         // save the data
-        fprintf(file, "%.10f, %.10e, %.10e, %.10e, %.10e, %.10e\n", t_, E_pot, E_kin, T, P, a0_);
+        fprintf(file, "%.10f, %.10e, %.10e, %.10e, %.10e, %.10e", t_, E_pot, E_kin, T, P, a0_);
+        for(int j=0;j<n_save_positions;j++){
+            fprintf(file, ", %.5e", pos[j][0]);
+            fprintf(file, ", %.5e", pos[j][1]);
+            fprintf(file, ", %.5e", pos[j][2]);
+        }
+        fprintf(file, "\n");
     }
     printf("\n");
     // update the variables outside this function
@@ -196,34 +217,37 @@ void task2(double dt, char* filename){
     double pos[n_atoms][3]; //positions
     double vel[n_atoms][3]; //velocities
 
-    double a0 = 4.03075; // Å
+    double a0 = 4.03139; // Å
 
     int n_timesteps = 1000;
     double t = 0;
 
     initialize_lattice(pos, vel, a0);
     
-    simulate_and_save_data(pos, vel, &t, filename, n_timesteps, dt, &a0, 0, 0, 0, 0);
+    simulate_and_save_data(pos, vel, &t, filename, n_timesteps, dt, &a0, 0, 0, 0, 0, 0);
 }
 
 void task3(){
     double pos[n_atoms][3]; //positions
     double vel[n_atoms][3]; //velocities
 
-    double a0 = 4.03075; // Å
+    double a0 = 4.03139; // Å
     double dt = 10e-3; //ps
     double t = 0;
     
     double tau_T = 100*dt;
     double T_desired = 500 + celsius; // K
-    int n_timesteps_temp_scaling = (5*tau_T)/dt;
+    int n_timesteps_temp_scaling = (2*tau_T)/dt;
 
-    double tau_P = 10*tau_T;
-    double P_desired = 1 / bar; // eV/Å^3
+    double tau_P = 3*tau_T;
+    double P_desired = 1 * bar; // eV/Å^3
     int n_timesteps_pressure_scaling = (5*tau_P)/dt;
 
-    int n_timesteps_simulation = 10000;
+    double dt_simulation = 5e-3; //ps
+    int n_timesteps_simulation = 5000;
 
+    printf("P_desired = %.5e eV/Å^3\n", P_desired);
+    printf("kappa_T = %.5e eV/Å^3\n", kappa_T);
 
     initialize_lattice(pos, vel, a0);
     
@@ -231,16 +255,76 @@ void task3(){
     simulate_and_save_data(pos, vel, &t, 
                         "data/H1_3_temp_scaling.csv", 
                         n_timesteps_temp_scaling, dt, &a0, 
-                        tau_T, T_desired, 0, 0);
+                        tau_T, T_desired, 0, 0, 0);
     // pressure equilibriation
     simulate_and_save_data(pos, vel, &t, 
                         "data/H1_3_pressure_scaling.csv", 
                         n_timesteps_pressure_scaling, dt, &a0, 
                         tau_T, T_desired, 
-                        tau_P, P_desired);
+                        tau_P, P_desired, 0);
+
+    // simulate
+    simulate_and_save_data(pos, vel, &t, 
+                        "data/H1_3_after_scaling.csv", 
+                        n_timesteps_simulation, dt_simulation, &a0, 
+                        0,0,0,0,
+                        5);
 }
 
+void task4(){
+    double pos[n_atoms][3]; //positions
+    double vel[n_atoms][3]; //velocities
 
+    double a0 = 4.03139; // Å
+    double dt = 10e-3; //ps
+    double t = 0;
+    
+    double tau_T = 100*dt;
+    double tau_P = 3*tau_T;
+
+    double T_desired_melting = 1500 + celsius; // K
+    double P_desired = 1 * bar; // eV/Å^3
+    double T_desired = 700 + celsius; // K
+
+
+    int n_timesteps_temp_scaling = (2*tau_T)/dt;
+    int n_timesteps_pressure_scaling = (10*tau_P)/dt;
+    int n_timesteps_temp_decreasing = (10*tau_P)/dt;
+
+    double dt_simulation = 5e-3; //ps
+    int n_timesteps_simulation = 5000;
+
+    printf("P_desired = %.5e eV/Å^3\n", P_desired);
+    printf("kappa_T = %.5e eV/Å^3\n", kappa_T);
+
+    initialize_lattice(pos, vel, a0);
+    
+    // temperature equilibriation
+    simulate_and_save_data(pos, vel, &t, 
+                        "data/H1_4_temp_scaling.csv", 
+                        n_timesteps_temp_scaling, dt, &a0, 
+                        tau_T, T_desired_melting, 0, 0, 0);
+    // pressure equilibriation while melting
+    simulate_and_save_data(pos, vel, &t, 
+                        "data/H1_4_pressure_scaling.csv", 
+                        n_timesteps_pressure_scaling, dt, &a0, 
+                        tau_T, T_desired_melting, 
+                        tau_P, P_desired, 0);
+
+    // temperature equilibriation to lower temperature while it is melted
+    simulate_and_save_data(pos, vel, &t, 
+                        "data/H1_4_temp_decreasing.csv", 
+                        n_timesteps_temp_decreasing, dt, &a0, 
+                        tau_T, T_desired, 
+                        tau_P, P_desired, 0);
+
+    // simulate
+    simulate_and_save_data(pos, vel, &t, 
+                        "data/H1_4_after_scaling.csv", 
+                        n_timesteps_simulation, dt_simulation, &a0, 
+                        0,0,0,0,
+                        5);
+}
 
 int
 run(
@@ -257,6 +341,7 @@ run(
     task2(50e-3, "data/H1_2_far_too_large.csv");
     task2(17.75e-3, "data/H1_2_little_too_large.csv");
     task3();
+    task4();
 
     return 0;
 }

@@ -9,7 +9,7 @@ a0, E_pot = np.genfromtxt("data/H1_1.csv", delimiter=",", unpack=True)
 
 
 # find index of nearest value to the cut point
-cut_idx = (np.abs(a0 - 4.03425425)).argmin()
+cut_idx = len(a0)-1 #(np.abs(a0 - 4.03425425)).argmin()
 
 params, pcov = curve_fit(E_pot_fit, a0[:cut_idx], E_pot[:cut_idx])
 

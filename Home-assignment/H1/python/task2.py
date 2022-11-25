@@ -5,7 +5,7 @@ import json
 def plot_energies_task2(input_file, output_file):
     # get header metadata
     with open(input_file, "r") as file:
-        metadata_str = "".join([file.readline() for i in range(3)])
+        metadata_str = "".join([file.readline() for i in range(4)])
         metadata_str = metadata_str.replace("# ","")
         metadata = json.loads(metadata_str)
         
