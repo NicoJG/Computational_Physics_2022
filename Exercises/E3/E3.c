@@ -256,6 +256,7 @@ int main() {
         }
         fprintf(file, "\n");
     }
+    fclose(file);
 
     double I = 0;
     for (int i=0; i<N_steps; i++) {
@@ -263,6 +264,7 @@ int main() {
     }
     I /= N_steps;
     printf("Task 3 integral result:\n%.10f\n",I);
+
 
     // free the allocated random number generator
     gsl_rng_free(rng);

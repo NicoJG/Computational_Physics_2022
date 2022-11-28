@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -80,3 +81,46 @@ plt.figure(figsize=(5,4))
 corner.corner(samples[N_burn:], bins=50, labels=["$x_0$", "$x_1$", "$x_2$"])
 #plt.hist2d(samples[:,0],samples[:,1], bins=100)
 plt.savefig("plots/E3_3_samples.png")
+
+
+# %%
+##################################
+# Task 4
+##################################
+f = np.genfromtxt("MC.txt")
+
+# Auto correlation method
+f2_mean = np.mean(f**2)
+f_mean2 = np.mean(f)**2
+
+k = np.arange(1,200, dtype=int)
+
+ff = np.array([
+    np.mean(f[k_:]*f[:-k_]) for k_ in k
+])
+
+phi = (ff-f_mean2)/(f2_mean-f_mean2)
+
+# Block-averaging method:
+B = 1000
+F = np.array([
+    np.sum(f[j*B:(j+1)*B])/B for j in range(len(f)//B)
+])
+s = B*np.var(F)/np.var(f)
+print(F.shape)
+print(s)
+
+# Plot for phi
+plt.figure(figsize=(5,4))
+plt.plot(k,phi)
+plt.axvline(s, linestyle=":", color="C1", label=f"s = {s:.5f}")
+plt.axhline(np.exp(-2), linestyle="--", color="k", alpha=0.5, label=rf"$\exp(-2) \approx {np.exp(-2):.4f}$")
+plt.xlabel("k")
+plt.ylabel(r"$\Phi_k$")
+plt.legend()
+plt.tight_layout()
+plt.savefig("plots/E3_4.png")
+
+# %%
+
+# %%
