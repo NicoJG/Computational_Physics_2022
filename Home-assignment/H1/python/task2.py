@@ -15,16 +15,24 @@ def plot_energies_task2(input_file, output_file):
 
     T_mean = np.mean(T)
 
-    plt.figure(figsize=(5,4))
-    plt.title(f"T = {T_mean:.5f} K ; dt = {dt*1e3:.4f} fs")
+    fig, axs = plt.subplots(1,2,figsize=(10,4))
+    plt.sca(axs[0])
+    plt.title(f"T = {T_mean:.5f} K ; dt = {dt*1e3:.1f} fs")
     plt.plot(t, E_pot, label=r"$E_\mathrm{pot}$")
     plt.plot(t, E_kin, label=r"$E_\mathrm{kin}$")
     plt.plot(t, E_pot+E_kin, label=r"$E_\mathrm{tot}$")
-
     plt.xlabel("time [ps]")
     plt.ylabel("energy [eV]")
-
     plt.legend()
+    
+    plt.sca(axs[1])
+    plt.plot(t, E_pot+E_kin, "C2", label=r"$E_\mathrm{tot}$")
+    plt.xlabel("time [ps]")
+    plt.ylabel("total energy [eV]")
+    plt.legend()
+    
+    
+    
     plt.tight_layout()
     plt.savefig(output_file)
 

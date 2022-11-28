@@ -332,6 +332,7 @@ run(
     char *argv[]
    )
 {
+    printf("%.5e", k_B);
     // Write your code here
     // This makes it possible to test
     // 100% of you code
@@ -339,7 +340,7 @@ run(
     task1();
     task2(10e-3, "data/H1_2_small_enough.csv");
     task2(50e-3, "data/H1_2_far_too_large.csv");
-    task2(17.75e-3, "data/H1_2_little_too_large.csv");
+    task2(15e-3, "data/H1_2_little_too_large.csv");
     task3();
     task4();
 
