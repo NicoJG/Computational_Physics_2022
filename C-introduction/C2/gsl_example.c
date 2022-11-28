@@ -6,27 +6,22 @@
 int
 main()
 {
-    const gsl_rng_type * T;
-    gsl_rng * r;
-
-    int i, n = 10;
-    gsl_rng_env_setup();
-
-    T = gsl_rng_default;
-    r = gsl_rng_alloc(T);
-
-    // typically the seed is set to the current time.
-    //time_t seed = time(NULL);
+    // set up the random number generator
     int seed = 42;
-    gsl_rng_set(r, seed); 
+    gsl_rng_env_setup();
+    const gsl_rng_type* T = gsl_rng_default;
+    gsl_rng* rng = gsl_rng_alloc(T);
+    gsl_rng_set(rng, seed); 
 
-    for (i = 0; i < n; i++){
-	double u = gsl_rng_uniform(r);
-	double g = gsl_ran_gaussian(r, 1);
+    // Generate some random numbers
+    for (int i = 0; i < 10; i++){
+	double u = gsl_rng_uniform(rng);
+	double g = gsl_ran_gaussian(rng, 1);
 	printf ("%.5f %.5f\n", u, g);
     }
 
-    gsl_rng_free (r);
+    // free the allocated random number generator
+    gsl_rng_free(rng);
 
     return 0;
 }
