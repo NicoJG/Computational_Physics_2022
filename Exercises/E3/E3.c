@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
+#include "tools.h"
 
 gsl_rng* init_rng(int seed){
     // seed = 0 means the seed is random
@@ -104,7 +105,7 @@ double F_inv(double y) {
  * Functions for task 3
  *****************************************************/
 void metropolis_algorithm(int n_dim, int N_steps, int N_burn, double init_pos[n_dim],
-                        double samples[N_steps][n_dim], double samples_burn[N_burn][n_dim],
+                        double** samples, double** samples_burn,
                         double (*pdf)(int, double*), void (*new_trial_pos)(int, double*, double*, gsl_rng*),
                         gsl_rng* rng) {
     // Generate N_steps samples (n_dim numbers per sample) using the Metropolis algorithm
@@ -223,10 +224,11 @@ int main() {
 
     // Task 3:
     int n_dim = 3;
-    int N_steps = 100000;
+    int N_steps = 10000000;
     int N_burn = 10000;
-    double samples[N_steps][n_dim];
-    double samples_burn[N_burn][n_dim];
+    int N_steps_save = 100000;
+    double** samples = create_2D_array(N_steps,n_dim);
+    double** samples_burn = create_2D_array(N_burn,n_dim);
     double init_pos[3] = {2, 2, 2};
     metropolis_algorithm(n_dim, N_steps, N_burn, init_pos, samples, samples_burn,
                         weightfunc, get_next_trial, rng);
@@ -247,9 +249,9 @@ int main() {
         }
         fprintf(file, "\n");
     }
-    // actual samples
+    // actual samples (save not all of them)
     fprintf(file, "# actual samples begin:\n");
-    for (int i=0; i<N_steps; i++) {
+    for (int i=0; i<N_steps_save; i++) {
         fprintf(file, "%.10f", samples[i][0]);
         for (int j=1; j<n_dim; j++) {
             fprintf(file, ", %.10f", samples[i][j]);
@@ -265,7 +267,8 @@ int main() {
     I /= N_steps;
     printf("Task 3 integral result:\n%.10f\n",I);
 
-
+    destroy_2D_array(samples);
+    destroy_2D_array(samples_burn);
     // free the allocated random number generator
     gsl_rng_free(rng);
 

@@ -17,7 +17,7 @@ all: simulate plot
 
 simulate: E3.c 
 	mkdir -p data
-	gcc E3.c -o E3 $(CFLAGS)
+	gcc E3.c tools.c -o E3 $(CFLAGS)
 	./E3
 	rm E3
 

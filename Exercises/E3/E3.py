@@ -6,6 +6,7 @@ import json
 ##################################
 # Task 1
 ##################################
+print("Plots task 1...")
 N, I, var = np.genfromtxt("data/E3_1.csv", delimiter=",", unpack=True)
 
 plt.figure(figsize=(5,4))
@@ -21,6 +22,7 @@ plt.savefig("plots/E3_1.png")
 ##################################
 # Task 2
 ##################################
+print("Plots task 2...")
 N2, I2, var2 = np.genfromtxt("data/E3_2.csv", delimiter=",", unpack=True)
 
 plt.figure(figsize=(5,4))
@@ -64,6 +66,7 @@ plt.savefig("plots/E3_2_x.png")
 ##################################
 # Task 3
 ##################################
+print("Plots task 3...")
 # get header metadata
 with open("data/E3_3_samples.csv", "r") as file:
     metadata_str = "".join([file.readline() for i in range(1)])
@@ -87,39 +90,62 @@ plt.savefig("plots/E3_3_samples.png")
 ##################################
 # Task 4
 ##################################
+print("Plots task 4...")
 f = np.genfromtxt("MC.txt")
 
-# Auto correlation method
-f2_mean = np.mean(f**2)
-f_mean2 = np.mean(f)**2
+f_shifted = f - f.mean()
 
-k = np.arange(1,200, dtype=int)
+# Auto correlation method
+f2_mean = np.mean(f_shifted**2)
+f_mean2 = np.mean(f_shifted)**2
+
+k = np.arange(1,1500, dtype=int)
 
 ff = np.array([
-    np.mean(f[k_:]*f[:-k_]) for k_ in k
+    np.mean(f_shifted[k_:]*f_shifted[:-k_]) for k_ in k
 ])
 
 phi = (ff-f_mean2)/(f2_mean-f_mean2)
 
-# Block-averaging method:
-B = 1000
-F = np.array([
-    np.sum(f[j*B:(j+1)*B])/B for j in range(len(f)//B)
-])
-s = B*np.var(F)/np.var(f)
-print(F.shape)
-print(s)
+s_idx = np.abs(phi - np.exp(-2)).argmin()
+s = k[s_idx]
+print(f"auto-correlation s: {s:.5f}")
 
 # Plot for phi
 plt.figure(figsize=(5,4))
 plt.plot(k,phi)
-plt.axvline(s, linestyle=":", color="C1", label=f"s = {s:.5f}")
+plt.axvline(s, linestyle=":", color="C1", label=f"auto-corr. s = {s:.5f}")
+#plt.axvline(s2, linestyle=":", color="C2", label=f"block-avg. s = {s2:.5f}")
 plt.axhline(np.exp(-2), linestyle="--", color="k", alpha=0.5, label=rf"$\exp(-2) \approx {np.exp(-2):.4f}$")
 plt.xlabel("k")
 plt.ylabel(r"$\Phi_k$")
 plt.legend()
 plt.tight_layout()
 plt.savefig("plots/E3_4.png")
+
+# Block-averaging method:
+B_lin = np.linspace(10,10000,1000,dtype=int)
+s2 = []
+for B in B_lin:
+    F = np.array([
+        np.sum(f[j*B:(j+1)*B])/B for j in range(len(f)//B)
+    ])
+    s2_ = B*np.var(F)/np.var(f)
+    s2.append(s2_)
+    
+s2 = np.array(s2)
+
+s2_mean = np.mean(s2[B_lin>=3000])
+print(f"mean block-average s: {s2_mean:.5f}")
+
+plt.figure(figsize=(5,4))
+plt.plot(B_lin, s2)
+plt.axhline(s, linestyle=":", color="C1", label=f"mean auto-corr. s = {s2_mean:.5f}")
+plt.xlabel("B")
+plt.ylabel("s")
+plt.legend()
+plt.tight_layout()
+plt.savefig("plots/E3_4_block_avg.png")
 
 # %%
 
