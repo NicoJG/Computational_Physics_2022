@@ -34,6 +34,8 @@ plt.plot(T,P)
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$P$")
 plt.legend()
+plt.tight_layout()
+plt.savefig("plots/task1_P.pdf")
 
 # %%
 N_AA = 2*(1-P**2)*N 
@@ -48,4 +50,17 @@ plt.plot(T,E)
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$E \:/\: \mathrm{eV}$")
 plt.legend()
+plt.tight_layout()
+plt.savefig("plots/task1_E.pdf")
+
 # %%
+C = np.gradient(E, T)
+
+plt.figure(figsize=(5,4))
+plt.axvline(T_c, linestyle=":", color="k", alpha=0.5, label=fr"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
+plt.plot(T,C)
+plt.xlabel(r"$T \:/\: \mathrm{K}$")
+plt.ylabel(r"$C \:/\: \mathrm{eV \, K^{-1}}$")
+plt.legend()
+plt.tight_layout()
+plt.savefig("plots/task1_C.pdf")

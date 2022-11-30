@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
 
@@ -282,7 +283,6 @@ void init_matrix_stack(int n, int m, double mat[n][m], double value){
 	}
 }
 
-
 gsl_rng* init_rng(int seed){
     // seed = 0 means the seed is random
     // set up the random number generator from GSL
@@ -294,4 +294,18 @@ gsl_rng* init_rng(int seed){
     }
 
     return rng;
+}
+
+void print_progress(double current_value, double min_value, double max_value, bool start_new) {
+	// shows the progress, but only at each round percentage, so that it does not slow down the computation
+	static int percent;
+	if (start_new) {
+		percent = -1;
+	}
+	int curr_percent = (int)(100*(current_value-min_value)/(max_value-min_value));
+	if (curr_percent != percent) {
+		percent = curr_percent;
+		printf("\33[2K\r%i %% (%f / %f)", percent, current_value, max_value);
+		fflush(stdout);
+	}
 }

@@ -35,7 +35,10 @@ endif
 
 all: H2 plotting | data plots
 
-plotting: 
+plotting: plots/task1_P.pdf
+
+plots/task1_P.pdf: python/task1.py
+	python python/task1.py
 
 H2: obj _H2
 	./H2

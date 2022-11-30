@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <stdbool.h>
 #include <gsl/gsl_rng.h>
 
 /* **********************************************
@@ -185,3 +186,4 @@ void fprint_matrix(FILE* file, double** mat, int n, int m);
 
 void init_matrix_stack(int n, int m, double mat[n][m], double value);
 gsl_rng* init_rng(int seed);
+void print_progress(double current_value, double min_value, double max_value, bool start_new);
