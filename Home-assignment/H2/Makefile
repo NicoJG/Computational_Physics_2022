@@ -30,21 +30,26 @@ ifeq ($(MAKECMDGOALS),test)
 OBJ_TEST = $(patsubst obj/%.o,obj_test/%.o,$(OBJ))
 -include unit-test/test.mk
 else
-CFLAGS += $(CFLAGS_OPT) 
+CFLAGS += $(CFLAGS_OPT) $(CFLAGS_debug) 
 endif
 
-all: H2 plotting | data plots
+all: data/H2a.csv plotting
 
-plotting: plots/task1_P.pdf
+plotting: plots/task1.pdf plots/task2.pdf
 
-plots/task1_P.pdf: python/task1.py
+plots/task1.pdf: python/task1.py | plots
 	python python/task1.py
 
-H2: obj _H2
+plots/task2.pdf: python/task2.py data/H2a.csv | plots
+	python python/task2.py
+
+data/H2a.csv: obj H2 | data
+	rm -rf data/full_simulations/
+	mkdir data/full_simulations/
 	./H2
 
-_H2: $(MAIN) $(OBJ)
-	$(CC) $(CFLAGS) $^ -o H2 $(LIB)
+H2: $(MAIN) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
 
 obj/%.o: src/%.c
 	$(CC) -MMD -c $(CFLAGS) $< -o $@ 
@@ -54,6 +59,7 @@ obj:
 
 data:
 	mkdir -p data
+	mkdir -p data/full_simulations
 
 plots:
 	mkdir -p plots
@@ -63,5 +69,8 @@ clean:
 	find -iname "*.d" -exec rm {} \;
 	rm -f program run-test
 	rm -rf obj obj_test
+	rm -rf data
+	rm -rf plots
+	rm -f ./H2
 
 .PHONY: clean

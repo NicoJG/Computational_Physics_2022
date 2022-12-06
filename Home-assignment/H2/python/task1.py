@@ -17,7 +17,7 @@ dE = E_AA + E_BB - 2*E_AB
 
 T_c = 2*dE/k_B
 
-T = np.linspace(0,1.5*T_c,1000) # K
+T = np.linspace(0,1200,5000) # K
 #T = np.linspace(906,1200,1000) # K
 
 def F(P,T):
@@ -28,39 +28,35 @@ def F(P,T):
 P = [minimize(F, 0.5, args=T_i, bounds=((0,1),)).x[0] for T_i in tqdm(T)]
 P = np.array(P)
 
-plt.figure(figsize=(5,4))
-plt.axvline(T_c, linestyle=":", color="k", alpha=0.001, label=fr"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
-plt.plot(T,P)
-plt.xlabel(r"$T \:/\: \mathrm{K}$")
-plt.ylabel(r"$P$")
-plt.legend()
-plt.tight_layout()
-plt.savefig("plots/task1_P.pdf")
-
-# %%
 N_AA = 2*(1-P**2)*N 
 N_BB = 2*(1-P**2)*N
 N_AB = 4*(1+P**2)*N
 
 E = N_AA*E_AA + N_BB*E_BB + N_AB*E_AB
 
-plt.figure(figsize=(5,4))
-plt.axvline(T_c, linestyle=":", color="k", alpha=0.5, label=fr"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
+C = np.gradient(E, T)
+
+fig, axs = plt.subplots(1,3, figsize=(15,4))
+
+fig.suptitle(f"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
+
+plt.sca(axs[0])
+plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
+plt.plot(T,P)
+plt.xlabel(r"$T \:/\: \mathrm{K}$")
+plt.ylabel(r"$P$")
+
+plt.sca(axs[1])
+plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
 plt.plot(T,E)
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$E \:/\: \mathrm{eV}$")
-plt.legend()
-plt.tight_layout()
-plt.savefig("plots/task1_E.pdf")
 
-# %%
-C = np.gradient(E, T)
-
-plt.figure(figsize=(5,4))
-plt.axvline(T_c, linestyle=":", color="k", alpha=0.5, label=fr"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
+plt.sca(axs[2])
+plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
 plt.plot(T,C)
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$C \:/\: \mathrm{eV \, K^{-1}}$")
-plt.legend()
+
 plt.tight_layout()
-plt.savefig("plots/task1_C.pdf")
+plt.savefig("plots/task1.pdf")
