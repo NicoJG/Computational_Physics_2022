@@ -219,7 +219,9 @@ void task2(double dt, char* filename){
 
     double a0 = 4.03139; // Å
 
-    int n_timesteps = 1000;
+    double t_max = 15;
+    int n_timesteps = t_max/dt;
+
     double t = 0;
 
     initialize_lattice(pos, vel, a0);
@@ -232,19 +234,19 @@ void task3(){
     double vel[n_atoms][3]; //velocities
 
     double a0 = 4.03139; // Å
-    double dt = 10e-3; //ps
+    double dt = 5e-3; //ps
     double t = 0;
     
     double tau_T = 100*dt;
     double T_desired = 500 + celsius; // K
-    int n_timesteps_temp_scaling = (2*tau_T)/dt;
+    int n_timesteps_temp_scaling = (6*tau_T)/dt;
 
     double tau_P = 3*tau_T;
     double P_desired = 1 * bar; // eV/Å^3
-    int n_timesteps_pressure_scaling = (5*tau_P)/dt;
+    int n_timesteps_pressure_scaling = (16*tau_P)/dt;
 
-    double dt_simulation = 5e-3; //ps
-    int n_timesteps_simulation = 5000;
+    double dt_simulation = 2e-3; //ps
+    int n_timesteps_simulation = 10000;
 
     printf("P_desired = %.5e eV/Å^3\n", P_desired);
     printf("kappa_T = %.5e eV/Å^3\n", kappa_T);
@@ -276,7 +278,7 @@ void task4(){
     double vel[n_atoms][3]; //velocities
 
     double a0 = 4.03139; // Å
-    double dt = 10e-3; //ps
+    double dt = 5e-3; //ps
     double t = 0;
     
     double tau_T = 100*dt;
@@ -287,12 +289,12 @@ void task4(){
     double T_desired = 700 + celsius; // K
 
 
-    int n_timesteps_temp_scaling = (2*tau_T)/dt;
-    int n_timesteps_pressure_scaling = (10*tau_P)/dt;
-    int n_timesteps_temp_decreasing = (10*tau_P)/dt;
+    int n_timesteps_temp_scaling = (4*tau_T)/dt;
+    int n_timesteps_pressure_scaling = (20*tau_P)/dt;
+    int n_timesteps_temp_decreasing = (20*tau_P)/dt;
 
-    double dt_simulation = 5e-3; //ps
-    int n_timesteps_simulation = 5000;
+    double dt_simulation = 2e-3; //ps
+    int n_timesteps_simulation = 10000;
 
     printf("P_desired = %.5e eV/Å^3\n", P_desired);
     printf("kappa_T = %.5e eV/Å^3\n", kappa_T);
@@ -337,11 +339,11 @@ run(
     // This makes it possible to test
     // 100% of you code
 
-    task1();
-    task2(10e-3, "data/H1_2_small_enough.csv");
-    task2(50e-3, "data/H1_2_far_too_large.csv");
-    task2(15e-3, "data/H1_2_little_too_large.csv");
-    task3();
+    //task1();
+    //task2(5e-3, "data/H1_2_small_enough.csv");
+    //task2(50e-3, "data/H1_2_far_too_large.csv");
+    //task2(15e-3, "data/H1_2_little_too_large.csv");
+    //task3();
     task4();
 
     return 0;

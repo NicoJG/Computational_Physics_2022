@@ -49,13 +49,12 @@ plots/H1_3_equilibration.pdf: data/H1_3_temp_scaling.csv python/task3.py
 plots/H1_4_equilibration.pdf: data/H1_4_temp_scaling.csv python/task4.py
 	python python/task4.py
 
-H1: obj _H1
+
+H1: $(MAIN) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
 	./H1
 
-_H1: $(MAIN) $(OBJ)
-	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
-
-obj/%.o: src/%.c
+obj/%.o: src/%.c | obj
 	$(CC) -MMD -c $(CFLAGS) $< -o $@ 
 
 obj:
