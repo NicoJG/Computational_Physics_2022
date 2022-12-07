@@ -213,6 +213,46 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
     fclose(file);
 }
 
+void save_system_state(char* file_path, int n_atoms, double pos[n_atoms][3], double vel[n_atoms][3], double a0, double t, double T, double P) {
+    FILE* file = fopen(file_path, "w");
+    // Header
+    fprintf(file, "# t[ps] = %.10f\n", t);
+    fprintf(file, "# a0[Å] = %.10f\n", a0);
+    fprintf(file, "# T[K] = %.10f\n", T);
+    fprintf(file, "# P[bar] = %.10f\n", P/bar);
+    fprintf(file, "# n_atoms = %i\n", n_atoms);
+    fprintf(file, "# pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]\n");
+    for (int i=0; i<n_atoms; i++) {
+        fprintf(file, "%.10f, %.10f, %.10f, %.10f, %.10f, %.10f\n", 
+            pos[i][0], pos[i][1], pos[i][2], vel[i][0], vel[i][1], vel[i][2]);
+    }
+    fclose(file);
+}
+
+void load_system_state(char* file_path, int n_atoms, double pos[n_atoms][3], double vel[n_atoms][3], double* a0, double* t, double* T, double* P) {
+    FILE* file = fopen(file_path, "r");
+    char buf[255];
+    int n_atoms_test = 0;
+    int res;
+
+    res = fscanf(file, "# t[ps] = %lf\n", t);
+    res = fscanf(file, "# a0[Å] = %lf\n", a0);
+    res = fscanf(file, "# T[K] = %lf\n", T);
+    res = fscanf(file, "# P[bar] = %lf\n", P);
+    (*P) *= bar;
+    res = fscanf(file, "# n_atoms = %i\n", &n_atoms_test);
+    if (n_atoms_test != n_atoms) {
+        perror("ERROR: n_atoms_test != n_atoms");
+        exit(1);
+    }
+    res = fscanf(file, "# pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]\n");
+    for (int i=0; i<n_atoms; i++) {
+        res = fscanf(file, "%lf, %lf, %lf, %lf, %lf, %lf\n", 
+            &pos[i][0], &pos[i][1], &pos[i][2], &vel[i][0], &vel[i][1], &vel[i][2]);
+    }
+    fclose(file);
+}
+
 void task2(double dt, char* filename){
     double pos[n_atoms][3]; //positions
     double vel[n_atoms][3]; //velocities
@@ -271,6 +311,8 @@ void task3(){
                         n_timesteps_simulation, dt_simulation, &a0, 
                         0,0,0,0,
                         5);
+
+    save_system_state("data/H1_solid_state.csv", n_atoms, pos, vel, a0, t, T_desired, P_desired);
 }
 
 void task4(){
@@ -326,6 +368,21 @@ void task4(){
                         n_timesteps_simulation, dt_simulation, &a0, 
                         0,0,0,0,
                         5);
+
+    save_system_state("data/H1_liquid_state.csv", n_atoms, pos, vel, a0, t, T_desired, P_desired);
+}
+
+void task5() {
+    double pos[n_atoms][3]; //positions
+    double vel[n_atoms][3]; //velocities
+
+    double a0, t, T, P;
+    double dt = 5e-3; //ps
+
+    load_system_state("data/H1_solid_state.csv", n_atoms, pos, vel, &a0, &t, &T, &P);
+
+    printf("loaded positions:\n");
+    print_matrix_stack(n_atoms, 3, pos);
 }
 
 int
@@ -344,7 +401,8 @@ run(
     //task2(50e-3, "data/H1_2_far_too_large.csv");
     //task2(15e-3, "data/H1_2_little_too_large.csv");
     //task3();
-    task4();
+    //task4();
+    task5();
 
     return 0;
 }

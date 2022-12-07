@@ -10,6 +10,7 @@ CFLAGS_debug = \
 	-O0
 
 CFLAGS_OPT = \
+		 -Werror \
 	     -O3 \
 	     -march=native
 
