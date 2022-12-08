@@ -1,7 +1,8 @@
 CC = gcc
 
 CFLAGS = \
-	 -Iinclude
+	 -Iinclude \
+	-Werror 
 
 CFLAGS_debug = \
 	-g \
@@ -10,9 +11,8 @@ CFLAGS_debug = \
 	-O0
 
 CFLAGS_OPT = \
-		 -Werror \
-	     -O3 \
-	     -march=native
+	-O3 \
+	-march=native
 
 LIB = \
       -lm \
@@ -36,7 +36,7 @@ endif
 
 all: H1 plotting | data plots
 
-plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_equilibration.pdf plots/H1_4_equilibration.pdf
+plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_equilibration.pdf plots/H1_4_equilibration.pdf task5 plots/H1_6.pdf
 
 plots/H1_1.pdf: data/H1_1.csv python/task1.py
 	python python/task1.py
@@ -49,6 +49,12 @@ plots/H1_3_equilibration.pdf: data/H1_3_temp_scaling.csv python/task3.py
 
 plots/H1_4_equilibration.pdf: data/H1_4_temp_scaling.csv python/task4.py
 	python python/task4.py
+
+task5: python/task5.py
+	python python/task5.py
+
+plots/H1_6.pdf: data/H1_6.csv python/task6.py
+	python python/task6.py
 
 
 H1: $(MAIN) $(OBJ)

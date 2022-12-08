@@ -70,6 +70,37 @@ void initialize_lattice(double pos[][3], double vel[][3], double a0){
     gsl_rng_free(rng);
 }
 
+void velocity_verlet_timestep(double* t, double dt, double a0,
+                            double pos[][3], double vel[][3], double F[][3]) {
+    double L_box = n_cells*a0;
+    /* v(t+dt/2) */
+    for (int j = 0; j < n_atoms; j++) {
+        vel[j][0] += dt * 0.5 * F[j][0]/m;
+        vel[j][1] += dt * 0.5 * F[j][1]/m;
+        vel[j][2] += dt * 0.5 * F[j][2]/m;
+    }
+    
+    /* q(t+dt) */
+    for (int j = 0; j < n_atoms; j++) {
+        pos[j][0] += dt * vel[j][0];
+        pos[j][1] += dt * vel[j][1];
+        pos[j][2] += dt * vel[j][2];
+    }
+    
+    /* F(t+dt) */
+    get_forces_AL(F,pos,L_box,n_atoms);
+    
+    /* v(t+dt) */
+    for (int j = 0; j < n_atoms; j++) {
+        vel[j][0] += dt * 0.5 * F[j][0]/m;
+        vel[j][1] += dt * 0.5 * F[j][1]/m;
+        vel[j][2] += dt * 0.5 * F[j][2]/m;
+    }
+
+    //increase the time
+    (*t) += dt;
+}
+
 void simulate_and_save_data(double pos[][3], double vel[][3], double* t, 
                             char* filename, 
                             int n_timesteps, double dt, double* a0,
@@ -85,7 +116,7 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
     fprintf(file, "# {\"dt\": %.5e, \"n_timesteps\": %i, \"run_time\": %.5e, \n",dt, n_timesteps, run_time);
     fprintf(file, "# \"temp_scaling_time\": %.5e, \"T_desired\": %.5e, \n", temp_scaling_time, T_desired);
     fprintf(file, "# \"pressure_scaling_time\": %.5e, \"P_desired\": %.5e, \n", pressure_scaling_time, P_desired/bar);
-    fprintf(file, "# \"n_save_positions\": %i}\n", n_save_positions);
+    fprintf(file, "# \"n_atoms\": %i, \"n_save_positions\": %i}\n", n_atoms, n_save_positions);
 
     // table header
     fprintf(file, "# t[ps], E_pot[eV], E_kin[eV], T[K], P[bar], a0[Å]");
@@ -123,32 +154,7 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
             fflush(stdout);
         }
 
-        /* v(t+dt/2) */
-        for (int j = 0; j < n_atoms; j++) {
-            vel[j][0] += dt * 0.5 * F[j][0]/m;
-            vel[j][1] += dt * 0.5 * F[j][1]/m;
-            vel[j][2] += dt * 0.5 * F[j][2]/m;
-        }
-        
-        /* q(t+dt) */
-        for (int j = 0; j < n_atoms; j++) {
-            pos[j][0] += dt * vel[j][0];
-            pos[j][1] += dt * vel[j][1];
-            pos[j][2] += dt * vel[j][2];
-        }
-        
-        /* F(t+dt) */
-        get_forces_AL(F,pos,L_box,n_atoms);
-        
-        /* v(t+dt) */
-        for (int j = 0; j < n_atoms; j++) {
-            vel[j][0] += dt * 0.5 * F[j][0]/m;
-            vel[j][1] += dt * 0.5 * F[j][1]/m;
-            vel[j][2] += dt * 0.5 * F[j][2]/m;
-        }
-
-        //increase the time
-        t_ += dt;
+        velocity_verlet_timestep(&t_, dt, a0_, pos, vel, F);
 
         // calculate the energies
         E_pot = get_energy_AL(pos, L_box, n_atoms);
@@ -161,16 +167,7 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
 
         // calculate the instantaneaous properties (temperature, pressure)
         T = (2/(3*n_atoms*k_B)) * E_kin;
-
         P = (n_atoms * k_B * T + get_virial_AL(pos, L_box, n_atoms)) / (L_box*L_box*L_box);
-
-        //P = E_kin;
-        //for(int j=0;j<n_atoms;j++){
-        //    P += pos[j][0]*F[j][0] * 0.5;
-        //    P += pos[j][1]*F[j][1] * 0.5;
-        //    P += pos[j][2]*F[j][2] * 0.5;
-        //}
-        //P *= 2/(3*L_box*L_box*L_box);
 
         if(temp_scaling_time > 0){
             // equilibration scaling(temperature)
@@ -193,6 +190,9 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
             L_box *= alpha_P_cbrt;
             a0_ *= alpha_P_cbrt;
         }
+
+        // Task 6: radial distribution function
+        double
 
         P = P / bar; // GPa 
 
@@ -372,17 +372,79 @@ void task4(){
     save_system_state("data/H1_liquid_state.csv", n_atoms, pos, vel, a0, t, T_desired, P_desired);
 }
 
-void task5() {
+void task6() {
     double pos[n_atoms][3]; //positions
     double vel[n_atoms][3]; //velocities
-
+    double F[n_atoms][3]; //forces
     double a0, t, T, P;
+
+    load_system_state("data/H1_liquid_state.csv", n_atoms, pos, vel, &a0, &t, &T, &P);
+
     double dt = 5e-3; //ps
+    int n_timesteps = 10000;
+    double run_time = (n_timesteps+1)*dt;
 
-    load_system_state("data/H1_solid_state.csv", n_atoms, pos, vel, &a0, &t, &T, &P);
+    double L_box = n_cells*a0;
+    int percent = -1; // for displaying progress
 
-    printf("loaded positions:\n");
-    print_matrix_stack(n_atoms, 3, pos);
+    // prepare the histogram
+    int n_bins = 300;
+    double r_max = L_box/2;
+    double dr = r_max/n_bins;
+    double N_r[n_bins];
+    for (int i_bin=0; i_bin<n_bins; i_bin++) {
+        N_r[i_bin] = 0;
+    }
+
+    printf("Task 6: Simulate and calculate the pair distance histogram...\n");
+    printf("dt = %.5e ; n_timesteps = %i ; run_time = %.5f\n", dt, n_timesteps, run_time);
+    
+    get_forces_AL(F,pos,L_box,n_atoms);
+
+    for (int i_step=0; i_step<n_timesteps; i_step++) {
+        // show progress
+        if((i_step+1)*100/(n_timesteps+1) != percent) {
+            percent = (i_step+1)*100/(n_timesteps+1);
+            printf("\33[2K\r%i %% ; timestep = %i", percent, i_step);
+            fflush(stdout);
+        }
+
+        velocity_verlet_timestep(&t, dt, a0, pos, vel, F);
+
+        // calculate the pair distances for the <N(r)> histogram
+        for (int k=0; k<n_atoms; k++) {
+        for (int l=k+1; l<n_atoms; l++) {
+            // distance in the minimum image convention
+            double dx[3];
+            for (int i_x=0; i_x<3; i_x++) {
+                dx[i_x] = pos[k][i_x] - pos[l][i_x];
+                dx[i_x] = dx[i_x] - L_box*round(dx[i_x]/L_box);
+            }
+            double dist = vector_norm(dx, 3);
+
+            // add it to the right bin (twice to accommodate for both N(r))
+            if (dist < r_max) {
+                int i_bin = (int) (dist/dr);
+                N_r[i_bin] += 2;
+            }
+        }
+        }
+    }
+    printf("\n");
+
+    // take the average instead of the absolute count
+    for (int i_bin=0; i_bin<n_bins; i_bin++) {
+        N_r[i_bin] /= (double) n_atoms*n_timesteps;
+    }
+    
+    // write to a file
+    FILE* file = fopen("data/H1_6.csv", "w");
+    fprintf(file, "# {\"n_atoms\": %i, \"L_box[Å]\": %.10f}\n", n_atoms, L_box);
+    fprintf(file, "# r[Å], <N(r)>\n");
+    for (int i_bin=0; i_bin<n_bins; i_bin++) {
+        fprintf(file, "%.10f, %.10f\n", (i_bin+0.5)*dr, N_r[i_bin]);
+    }
+    fclose(file);
 }
 
 int
@@ -391,7 +453,6 @@ run(
     char *argv[]
    )
 {
-    printf("%.5e", k_B);
     // Write your code here
     // This makes it possible to test
     // 100% of you code
@@ -402,7 +463,7 @@ run(
     //task2(15e-3, "data/H1_2_little_too_large.csv");
     //task3();
     //task4();
-    task5();
+    task6();
 
     return 0;
 }
