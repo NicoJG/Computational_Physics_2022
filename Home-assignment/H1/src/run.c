@@ -553,15 +553,15 @@ run(
     // This makes it possible to test
     // 100% of you code
 
-    // task1();
-    // task2(5e-3, "data/H1_2_small_enough.csv");
-    // task2(50e-3, "data/H1_2_far_too_large.csv");
-    // task2(15e-3, "data/H1_2_little_too_large.csv");
-    // task3();
-    // task4();
-    // task6();
-    //task7();
+    // because every task takes some time, all tasks that have already been calculated are commented out
+    task1();
+    task2(5e-3, "data/H1_2_small_enough.csv");
+    task2(50e-3, "data/H1_2_far_too_large.csv");
+    task2(15e-3, "data/H1_2_little_too_large.csv");
+    task3();
+    task4();
+    task6();
+    task7();
     
-
     return 0;
 }

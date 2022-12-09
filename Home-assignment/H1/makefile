@@ -31,7 +31,7 @@ ifeq ($(MAKECMDGOALS),test)
 OBJ_TEST = $(patsubst obj/%.o,obj_test/%.o,$(OBJ))
 -include unit-test/test.mk
 else
-CFLAGS += $(CFLAGS_debug) 
+CFLAGS += $(CFLAGS_OPT) 
 endif
 
 all: H1 plotting | data plots
