@@ -191,9 +191,6 @@ void simulate_and_save_data(double pos[][3], double vel[][3], double* t,
             a0_ *= alpha_P_cbrt;
         }
 
-        // Task 6: radial distribution function
-        double
-
         P = P / bar; // GPa 
 
         // save the data
@@ -447,6 +444,105 @@ void task6() {
     fclose(file);
 }
 
+
+
+void task7() {
+    double pos[n_atoms][3]; //positions
+    double vel[n_atoms][3]; //velocities
+    double F[n_atoms][3]; //forces
+    double a0, t, T, P;
+
+    load_system_state("data/H1_liquid_state.csv", n_atoms, pos, vel, &a0, &t, &T, &P);
+
+    double dt = 5e-3; //ps
+    int n_timesteps = 10000;
+    int n_skip_timesteps = 9;
+    double run_time = (n_timesteps+1)*dt;
+
+    double L_box = n_cells*a0;
+    int percent = -1; // for displaying progress
+
+    // prepare the q grid
+    int n_grid = 25; // number of grid points per dimension
+    int n_q = n_grid*n_grid*n_grid; // number of grid points in total
+    double** q = create_2D_array(n_grid*n_grid*n_grid, 3);
+    double* S_q = (double*)calloc(n_grid*n_grid*n_grid, sizeof(double));
+    int i_q = 0;
+    for (int n_x=0; n_x<n_grid; n_x++) {
+    for (int n_y=0; n_y<n_grid; n_y++) {
+    for (int n_z=0; n_z<n_grid; n_z++) {
+        q[i_q][0] = 2*M_PI/L_box * n_x;
+        q[i_q][1] = 2*M_PI/L_box * n_y;
+        q[i_q][2] = 2*M_PI/L_box * n_z;
+        i_q++;
+    }
+    }
+    }
+
+    printf("Task 5: Simulate and calculate the structure factors...\n");
+    printf("dt = %.5e ; n_timesteps = %i ; run_time = %.5f\n", dt, n_timesteps, run_time);
+    
+    get_forces_AL(F,pos,L_box,n_atoms);
+
+    int skip_counter = n_skip_timesteps;
+    int used_timestep_counter = 0;
+
+    for (int i_step=0; i_step<n_timesteps; i_step++) {
+        // show progress
+        if((i_step+1)*100/(n_timesteps+1) != percent) {
+            percent = (i_step+1)*100/(n_timesteps+1);
+            printf("\33[2K\r%i %% ; timestep = %i", percent, i_step);
+            fflush(stdout);
+        }
+
+        velocity_verlet_timestep(&t, dt, a0, pos, vel, F);
+
+        if (skip_counter<n_skip_timesteps) {
+            skip_counter++;
+            continue;
+        }
+        skip_counter = 0;
+        used_timestep_counter++;
+
+        // calculate the structure factors
+        for (int i_q=0; i_q<n_q; i_q++) {
+            double cos_sum = 0;
+            double sin_sum = 0;
+            for (int i_atom=0; i_atom<n_atoms; i_atom++) {
+                // minimum image conventiion position of the atom
+                double temp_pos[3];
+                temp_pos[0] = pos[i_atom][0] - L_box*round(pos[i_atom][0]/L_box);
+                temp_pos[1] = pos[i_atom][1] - L_box*round(pos[i_atom][1]/L_box);
+                temp_pos[2] = pos[i_atom][2] - L_box*round(pos[i_atom][2]/L_box);
+
+                double q_dot_r = dot_product(q[i_q],temp_pos, 3);
+                cos_sum += cos(q_dot_r);
+                sin_sum += sin(q_dot_r);
+            }
+            S_q[i_q] += (cos_sum*cos_sum + sin_sum*sin_sum)/n_atoms;
+        }
+    }
+    printf("\n");
+
+    // take the average instead of the sum
+    for (int i_q=0; i_q<n_q; i_q++) {
+        S_q[i_q] /= used_timestep_counter;
+    }
+
+    FILE* file = fopen("data/H1_7.csv", "w");
+    fprintf(file, "# {\"n_timesteps\": %i, \"n_skip_timesteps\": %i, \"used_timesteps\": %i, \"n_grid\": %i}\n", n_timesteps, n_skip_timesteps, used_timestep_counter, n_grid);
+    fprintf(file, "# q_x[Å^-1], q_x[Å^-1], q_x[Å^-1], S(q)\n");
+    for (int i_q=0; i_q<n_q; i_q++) {
+        double q_norm = vector_norm(q[i_q], 3);
+        fprintf(file, "%.10f, %.10f, %.10f, %.10f, %.10f\n", q[i_q][0], q[i_q][1], q[i_q][2], q_norm, S_q[i_q]);
+    }
+    fclose(file);
+
+    // free stuff
+    destroy_2D_array(q);
+    free(S_q);
+}
+
 int
 run(
     int argc,
@@ -457,13 +553,15 @@ run(
     // This makes it possible to test
     // 100% of you code
 
-    //task1();
-    //task2(5e-3, "data/H1_2_small_enough.csv");
-    //task2(50e-3, "data/H1_2_far_too_large.csv");
-    //task2(15e-3, "data/H1_2_little_too_large.csv");
-    //task3();
-    //task4();
-    task6();
+    // task1();
+    // task2(5e-3, "data/H1_2_small_enough.csv");
+    // task2(50e-3, "data/H1_2_far_too_large.csv");
+    // task2(15e-3, "data/H1_2_little_too_large.csv");
+    // task3();
+    // task4();
+    // task6();
+    //task7();
+    
 
     return 0;
 }

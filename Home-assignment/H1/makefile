@@ -31,12 +31,12 @@ ifeq ($(MAKECMDGOALS),test)
 OBJ_TEST = $(patsubst obj/%.o,obj_test/%.o,$(OBJ))
 -include unit-test/test.mk
 else
-CFLAGS += $(CFLAGS_OPT) 
+CFLAGS += $(CFLAGS_debug) 
 endif
 
 all: H1 plotting | data plots
 
-plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_equilibration.pdf plots/H1_4_equilibration.pdf task5 plots/H1_6.pdf
+plotting: plots/H1_1.pdf plots/H1_2_small_enough.pdf plots/H1_3_equilibration.pdf plots/H1_4_equilibration.pdf task5 plots/H1_6.pdf plots/H1_7.pdf
 
 plots/H1_1.pdf: data/H1_1.csv python/task1.py
 	python python/task1.py
@@ -55,6 +55,9 @@ task5: python/task5.py
 
 plots/H1_6.pdf: data/H1_6.csv python/task6.py
 	python python/task6.py
+
+plots/H1_7.pdf: data/H1_7.csv python/task7.py
+	python python/task7.py
 
 
 H1: $(MAIN) $(OBJ)
