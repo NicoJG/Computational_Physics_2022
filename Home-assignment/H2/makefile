@@ -26,9 +26,9 @@ else
 CFLAGS += $(CFLAGS_OPT)
 endif
 
-H3: obj _H3
+H2: obj _H2
 
-_H3: $(MAIN) $(OBJ)
+_H2: $(MAIN) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
 
 obj/%.o: src/%.c
@@ -40,7 +40,7 @@ obj:
 clean:
 	find -iname "*.o" -exec rm {} \;
 	find -iname "*.d" -exec rm {} \;
-	rm -f H3 run-test
+	rm -f H2 run-test
 	rm -rf obj obj_test
 
 .PHONY: clean
