@@ -11,41 +11,8 @@
 const double k_B = 8.617333262e-5; // eV/K;
 
 // parameters of the simulation
-const double E_AA = -436e-3; // eV E_CuCu
-const double E_BB = -113e-3; // eV E_ZnZn
-const double E_AB = -294e-3; // eV E_CuZn
 const int n_cells = 10;
 const int N_atoms = 2*n_cells*n_cells*n_cells;
-
-void count_bonds(int N_atoms, int* atype, int** nn_idxs,
-                int* N_AA, int* N_BB, int* N_AB) {
-    // count the types of neares neighbor pairs
-    (*N_AA) = 0;
-    (*N_BB) = 0;
-    (*N_AB) = 0;
-
-    for (int i=0; i<N_atoms; i++) {
-        int atype_a = atype[i];
-        for (int j=0; j<8; j++) {
-            int atype_b = atype[nn_idxs[i][j]];
-            if (atype_a == 0 && atype_b == 0) {
-                (*N_AA)++;
-            } else if (atype_a == 1 && atype_b == 1) {
-                (*N_BB)++;
-            } else {
-                (*N_AB)++;
-            }
-        }
-    }
-    // but now we counted each bond twice
-    if ((*N_AA)%2 == 1 || (*N_BB)%2 == 1 || (*N_AB)%2 == 1) {
-        perror("ERROR: number of pairs should be even");
-        exit(1);
-    }
-    (*N_AA) /= 2;
-    (*N_BB) /= 2;
-    (*N_AB) /= 2;
-}
 
 void update_bond_counts_after_swap(int N_atoms, int* atype, 
                 int** nn_idxs, int** pos,
@@ -60,7 +27,7 @@ void update_bond_counts_after_swap(int N_atoms, int* atype,
 
     // update the Number of A atoms in sublattice a
     // if position a is on a different sublattice than position b, N_Aa can change
-    if (pos[swap_idx_a][3] != pos[swap_idx_a][3]) {
+    if (pos[swap_idx_a][3] != pos[swap_idx_b][3]) {
         if (pos[swap_idx_a][3] == 0) {
             // position a is on sublattice a
             if (atype_a == 0) {
@@ -81,6 +48,12 @@ void update_bond_counts_after_swap(int N_atoms, int* atype,
     // update bonds at position a
     for (int j=0; j<8; j++) {
         int atype_nn = atype[nn_idxs[swap_idx_a][j]];
+
+        // if the nn of a is b then the change is already acounted for
+        if (nn_idxs[swap_idx_a][j] == swap_idx_b) {
+            continue;
+        }
+
         // substract old bond and add new bond
         if (atype_a == 0 && atype_nn == 0) {
             (*N_AA)--;
@@ -123,27 +96,18 @@ void update_bond_counts_after_swap(int N_atoms, int* atype,
     }
 }
 
-double calc_energy(int N_AA, int N_BB, int N_AB) {
-    return N_AA*E_AA + N_BB*E_BB + N_AB*E_AB;
-}
-
-double calc_P(int N_atoms, int N_Aa) {
-    // long-range order parameter P
-    int N_A = N_atoms/2;
-    return 2.*((double)N_Aa)/N_A - 1.;
-}
-
-double calc_r(int N_atoms, int N_AB) {
-    // short-range order parameter r
-    int N = N_atoms/2;
-    return (N_AB-4.*N)/(4.*N);
-}
-
 void metropolis_algorithm(int N_atoms, int n_steps, double T, 
                         int* atype, int** pos, int** nn_idxs, gsl_rng* rng, 
                         double* E_out, double* P_out, double* r_out) {
-    int N_AA, N_BB, N_AB, N_Aa;
+    int N_AA, N_BB, N_AB, N_Aa=0;
     count_bonds(N_atoms,atype,nn_idxs,&N_AA, &N_BB, &N_AB);
+    // count A atoms on a sublattice
+    for (int i=0; i<N_atoms; i++) {
+        if (atype[i] == 0 && pos[i][3] == 0) {
+            N_Aa++;
+        }
+    }
+
     double E_curr = calc_energy(N_AA, N_BB, N_AB);
     print_progress(0,0,n_steps-1,true);
     // calc the energy of the current configuration
@@ -152,7 +116,7 @@ void metropolis_algorithm(int N_atoms, int n_steps, double T,
         // choose which atoms to swap
         int swap_idx_a = gsl_rng_uniform_int(rng, N_atoms);
         int swap_idx_b = gsl_rng_uniform_int(rng, N_atoms);
-        while (swap_idx_a == swap_idx_b) {
+        while (swap_idx_a == swap_idx_b || atype[swap_idx_a] == atype[swap_idx_b]) {
             swap_idx_b = gsl_rng_uniform_int(rng, N_atoms);
         }
 
@@ -168,6 +132,7 @@ void metropolis_algorithm(int N_atoms, int n_steps, double T,
                             &N_AA_trial, &N_BB_trial, &N_AB_trial, &N_Aa_trial);
         double E_trial = calc_energy(N_AA_trial, N_BB_trial, N_AB_trial);
         double DeltaE = E_trial - E_curr;
+        //DeltaE = E_curr - E_trial;
         bool accept = (DeltaE <= 0);
         if (!accept) {
             accept = gsl_rng_uniform(rng) <= exp(-DeltaE/(k_B*T));
@@ -185,9 +150,14 @@ void metropolis_algorithm(int N_atoms, int n_steps, double T,
             N_AB = N_AB_trial;
             N_Aa = N_Aa_trial;
         }
+
+        //if (T>600 && i_step>8e6) {
+        //    printf("N_AA = %i, N_BB = %i, N_AB = %i, N_Aa = %i, E = %f\n",N_AA,N_BB,N_AB,N_Aa,E_curr);
+        //}
         
-        if (8*N_atoms != N_AA+N_BB+N_AB) {
-            printf("ERROR: bonds calculated wrong: N_AA = %i, N_BB = %i")
+        if (4*N_atoms != N_AA+N_BB+N_AB || N_AA<0 || N_BB<0 || N_AB<0) {
+            printf("\nERROR: bonds calculated wrong: N_AA = %i, N_BB = %i, N_AB = %i\n", N_AA, N_BB, N_AB);
+            exit(1);
         }
         
         // calculate various instantaneous quantities
@@ -201,14 +171,10 @@ void metropolis_algorithm(int N_atoms, int n_steps, double T,
 }
 
 void perform_simulation(double T, int n_eq_steps, int n_steps, 
-                    bool save_steps, char* save_steps_file_path, gsl_rng* rng,
-                    double* E_avg, double* P_avg, double* r_avg, double* C) {
-    int* atype = (int*)malloc(N_atoms*sizeof(int));
-    int** pos = create_2D_int_array(N_atoms, 4);
-    int** nn_idxs = create_2D_int_array(N_atoms, 8);
-    int idx_by_pos[n_cells][n_cells][n_cells][2];
-
-    construct_bcc_binary_alloy(n_cells, atype, pos, nn_idxs, idx_by_pos);
+                    int* atype, int** pos, int** nn_idxs, int idx_by_pos[n_cells][n_cells][n_cells][2],
+                    bool save_steps, char* save_steps_file_path, gsl_rng* rng, int n_skip_saves,
+                    double* E_avg, double* P_avg, double* r_avg,
+                    double* E_std, double* P_std, double* r_std, double* C) {
 
     // Monte Carlo Simulation, Metropolis Algorithm
     int n_tot_steps = n_eq_steps+n_steps;
@@ -218,25 +184,29 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
 
     metropolis_algorithm(N_atoms, n_tot_steps, T, atype, pos, nn_idxs, rng, E, P, r);
 
-    // calculate the average quantities
+    // calculate the average quantities (without the equilibration steps)
     *E_avg = average(E+n_eq_steps, n_steps);
     *P_avg = average(P+n_eq_steps, n_steps);
     *r_avg = average(r+n_eq_steps, n_steps);
+    *E_std = standard_deviation(E+n_eq_steps, n_steps);
+    *P_std = standard_deviation(P+n_eq_steps, n_steps);
+    *r_std = standard_deviation(r+n_eq_steps, n_steps);
 
     // calculate the heat capacity: C = 1/k_BT * (<E^2>-<E>^2)
     double* E_squared = (double*)malloc(n_steps*sizeof(double));
     elementwise_multiplication(E_squared, E+n_eq_steps, E+n_eq_steps, n_steps);
     double E_squared_avg = average(E_squared, n_steps);
-    *C = (E_squared_avg - (*E_avg)*(*E_avg))/(k_B*T);
+    *C = (E_squared_avg - (*E_avg)*(*E_avg))/(k_B*T*T);
 
     if (save_steps) {
-        printf("Save %i steps for T = %.4f K ...\n", n_tot_steps, T);
+        int n_save_steps = n_tot_steps / n_skip_saves;
+        printf("Save %i steps from %i for T = %.4f K ...\n", n_save_steps, n_tot_steps, T);
         // write it to a file
         FILE* file = fopen(save_steps_file_path, "w");
-        fprintf(file, "# {\"T[K]\": %.2f, \"n_eq_steps\":%i, \"n_steps\": %i,\n", T, n_eq_steps, n_steps);
+        fprintf(file, "# {\"T[K]\": %.2f, \"n_eq_steps\":%i, \"n_steps\": %i, \"n_skip_saves\": %i,\n", T, n_eq_steps, n_steps, n_skip_saves);
         fprintf(file, "# \"P\": %.10f, \"E[eV]\": %.10f, \"C[eV/K]\": %.10f, \"r\": %.10f}\n", *P_avg, *E_avg, *C, *r_avg);
         fprintf(file, "# i_step, E[eV], P, r\n");
-        for (int i_step=0; i_step<n_steps; i_step++) {
+        for (int i_step=0; i_step<n_eq_steps+n_steps; i_step+=n_skip_saves) {
             fprintf(file, "%i, %.10e, %.10e, %.10e\n", i_step, E[i_step], P[i_step], r[i_step]);
         }
         fclose(file);    
@@ -247,9 +217,6 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
     free(E_squared);
     free(P);
     free(r);
-    free(atype);
-    destroy_2D_int_array(pos);
-    destroy_2D_int_array(nn_idxs);
 }
 
 int
@@ -263,66 +230,75 @@ run(
     // 100% of you code
     gsl_rng* rng = init_rng(42);
 
-    int n_T_saves = 3;
-    int n_T = 20;
-    int T_min = 100;
-    int T_max = 1200;
+    int n_T_saves = 5; // number of T's to fully save
+    int n_T = 140;
+    int T_min = 300;
+    int T_max = 1000;
     int dT = (T_max-T_min)/(n_T-1);
-    int dT_save = (T_max-T_min)/(n_T_saves-1);
+    //int dT_save = (T_max-T_min)/(n_T_saves-1);
 
     double* T = (double*)malloc(n_T*sizeof(double));
     for (int i=0; i<n_T; i++) {
         T[i] = T_min + i*dT;
     }
 
-
     double* E = (double*)malloc(n_T*sizeof(double));
     double* P = (double*)malloc(n_T*sizeof(double));
     double* r = (double*)malloc(n_T*sizeof(double));
+    double* E_std = (double*)malloc(n_T*sizeof(double));
+    double* P_std = (double*)malloc(n_T*sizeof(double));
+    double* r_std = (double*)malloc(n_T*sizeof(double));
     double* C = (double*)malloc(n_T*sizeof(double));
 
-    int n_eq_steps_save = 1e6;
-    int n_steps_save = 1e6;
+    int n_eq_steps = 0.5e6;
+    int n_steps = 4.5e6;
+    int n_skip_saves = 1e1;
 
-    int n_eq_steps = 1e7;
-    int n_steps = 1e7;
+    // init the lattice completely ordered
+    int* atype = (int*)malloc(N_atoms*sizeof(int));
+    int** pos = create_2D_int_array(N_atoms, 4);
+    int** nn_idxs = create_2D_int_array(N_atoms, 8);
+    int idx_by_pos[n_cells][n_cells][n_cells][2];
+    construct_bcc_binary_alloy(n_cells, atype, pos, nn_idxs, idx_by_pos);
 
-    // save a few full simulations
-    for (int i=0; i<n_T_saves; i++) {
-        // save 3 full simulations
-        double T_ = T_min + i*dT_save;
-        char save_step_file_path[100];
-        sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_T%.2fK.csv", T_);
-
-        perform_simulation(T_, n_eq_steps_save, n_steps_save, 
-                        true, save_step_file_path, rng,
-                        E, P, r, C);
-    }
-
-    // perform alot of simulations without saving
+    // perform the simulations
     for (int i=0; i<n_T; i++) {
+        bool save = false;
+        char save_step_file_path[100];
+        // check if this step should be saved
+        if (i%(n_T/(n_T_saves-1)) == 0 || i==(n_T-1)) {
+            save = true;
+            sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_T%.2fK.csv", T[i]);
+        }
         perform_simulation(T[i], n_eq_steps, n_steps, 
-                        false, "", rng,
-                        E+i, P+i, r+i, C+i);
+                        atype, pos, nn_idxs, idx_by_pos,
+                        save, save_step_file_path, rng, n_skip_saves,
+                        E+i, P+i, r+i,E_std+i, P_std+i, r_std+i, C+i);
         printf("%i/%i done. (T = %.2f K)\n", i+1,n_T,T[i]);
     }
 
     // save the results
     FILE* file = fopen("data/H2a.csv", "w");
     fprintf(file, "# {\"n_eq_steps\": %i, \"n_steps\": %i}\n", n_eq_steps, n_steps);
-    fprintf(file, "# T, E, P, r, C\n");
+    fprintf(file, "# T[K], E[eV], E_std[eV], P, P_std, r, r_std, C[eV/K]\n");
     for (int i=0; i<n_T; i++) {
-        fprintf(file, "%.5f, %.10f, %.10f, %.10f, %.10f\n", T[i], E[i], P[i], r[i], C[i]);
+        fprintf(file, "%.5f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f\n", 
+                T[i], E[i], E_std[i], P[i], P_std[i], r[i], r_std[i], C[i]);
     }
     fclose(file);
-
 
     // tidy up
     free(T);
     free(E);
     free(P);
     free(r);
+    free(E_std);
+    free(P_std);
+    free(r_std);
     free(C);
     gsl_rng_free(rng);
+    free(atype);
+    destroy_2D_int_array(pos);
+    destroy_2D_int_array(nn_idxs);
     return 0;
 }

@@ -12,3 +12,12 @@
  */
 void construct_bcc_binary_alloy(int n_cells, int* atype, int** pos, 
                                 int** nn_idxs, int idx_by_pos[n_cells][n_cells][n_cells][2]);
+
+void count_bonds(int N_atoms, int* atype, int** nn_idxs,
+                int* N_AA, int* N_BB, int* N_AB);
+
+double calc_energy(int N_AA, int N_BB, int N_AB);
+
+double calc_P(int N_atoms, int N_Aa);
+
+double calc_r(int N_atoms, int N_AB);

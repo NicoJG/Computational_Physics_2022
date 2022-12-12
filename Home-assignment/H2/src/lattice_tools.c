@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// parameters of the simulation
+const double E_AA = -436e-3; // eV E_CuCu
+const double E_BB = -113e-3; // eV E_ZnZn
+const double E_AB = -294e-3; // eV E_CuZn
+
 /*
  * Constructs the arrays that describe a binary alloy with perfect ordering
  * @n_cells - number of unit cells per direction -> N_atoms = 2*n_cells^3
@@ -79,4 +84,52 @@ void construct_bcc_binary_alloy(int n_cells, int* atype, int** pos,
     }
     }
     }
+}
+
+
+
+void count_bonds(int N_atoms, int* atype, int** nn_idxs,
+                int* N_AA, int* N_BB, int* N_AB) {
+    // count the types of neares neighbor pairs
+    (*N_AA) = 0;
+    (*N_BB) = 0;
+    (*N_AB) = 0;
+
+    for (int i=0; i<N_atoms; i++) {
+        int atype_a = atype[i];
+        for (int j=0; j<8; j++) {
+            int atype_b = atype[nn_idxs[i][j]];
+            if (atype_a == 0 && atype_b == 0) {
+                (*N_AA)++;
+            } else if (atype_a == 1 && atype_b == 1) {
+                (*N_BB)++;
+            } else {
+                (*N_AB)++;
+            }
+        }
+    }
+    // but now we counted each bond twice
+    if ((*N_AA)%2 == 1 || (*N_BB)%2 == 1 || (*N_AB)%2 == 1) {
+        perror("ERROR: number of pairs should be even");
+        exit(1);
+    }
+    (*N_AA) /= 2;
+    (*N_BB) /= 2;
+    (*N_AB) /= 2;
+}
+
+double calc_energy(int N_AA, int N_BB, int N_AB) {
+    return N_AA*E_AA + N_BB*E_BB + N_AB*E_AB;
+}
+
+double calc_P(int N_atoms, int N_Aa) {
+    // long-range order parameter P
+    int N_A = N_atoms/2;
+    return 2.*((double)N_Aa)/N_A - 1.;
+}
+
+double calc_r(int N_atoms, int N_AB) {
+    // short-range order parameter r
+    int N = N_atoms/2;
+    return (N_AB-4.*N)/(4.*N);
 }
