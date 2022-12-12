@@ -230,16 +230,34 @@ run(
     // 100% of you code
     gsl_rng* rng = init_rng(42);
 
-    int n_T_saves = 5; // number of T's to fully save
-    int n_T = 140;
-    int T_min = 300;
-    int T_max = 1000;
-    int dT = (T_max-T_min)/(n_T-1);
-    //int dT_save = (T_max-T_min)/(n_T_saves-1);
+    // make 3 sections of temperature, where around the critical temperature it more dense
+    int T_0 = 300;
+    int T_1 = 600;
+    int T_2 = 800;
+    int T_3 = 1000;
+    // delta T steps in the sections
+    int dT01 = 10;
+    int dT12 = 2;
+    int dT23 = 10;
+    // number of T steps in each section
+    int n_T01 = (T_1-T_0)/dT01;
+    int n_T12 = (T_2-T_1)/dT12;
+    int n_T23 = (T_3-T_2)/dT23;
+    int n_T = n_T01 + n_T12 + n_T23;
+
+    int n_T_saves = 10; // number of T's to fully save
 
     double* T = (double*)malloc(n_T*sizeof(double));
+    double temp_T = T_0;
     for (int i=0; i<n_T; i++) {
-        T[i] = T_min + i*dT;
+        T[i] = temp_T;
+        if (T_0 <= temp_T && temp_T < T_1) {
+            temp_T += dT01;
+        } else if (T_1 <= temp_T && temp_T < T_2) {
+            temp_T += dT12;
+        } else if (T_2 <= temp_T && temp_T < T_3) {
+            temp_T += dT23;
+        }
     }
 
     double* E = (double*)malloc(n_T*sizeof(double));
@@ -252,7 +270,7 @@ run(
 
     int n_eq_steps = 0.5e6;
     int n_steps = 4.5e6;
-    int n_skip_saves = 1e1;
+    int n_skip_saves = 10;
 
     // init the lattice completely ordered
     int* atype = (int*)malloc(N_atoms*sizeof(int));
@@ -266,9 +284,9 @@ run(
         bool save = false;
         char save_step_file_path[100];
         // check if this step should be saved
-        if (i%(n_T/(n_T_saves-1)) == 0 || i==(n_T-1)) {
+        if (i%((n_T-1)/(n_T_saves-1)) == 0) {
             save = true;
-            sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_T%.2fK.csv", T[i]);
+            sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_%0*i_T%.0fK.csv", ((int)log10(n_T))+1, i, T[i]);
         }
         perform_simulation(T[i], n_eq_steps, n_steps, 
                         atype, pos, nn_idxs, idx_by_pos,

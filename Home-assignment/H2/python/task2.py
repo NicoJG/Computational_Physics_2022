@@ -42,19 +42,19 @@ plt.sca(axs[0])
 plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
 plt.xlabel("simulation step")
 plt.ylabel("P")
-plt.legend()
+plt.legend(loc="center right")
 
 plt.sca(axs[1])
 plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
 plt.xlabel("simulation step")
 plt.ylabel("energy / eV")
-plt.legend()
+plt.legend(loc="center right")
 
 plt.sca(axs[2])
 plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
 plt.xlabel("simulation step")
 plt.ylabel("r")
-plt.legend()
+plt.legend(loc="center right")
     
 plt.tight_layout()
 plt.savefig(f"plots/H2a_simsteps.pdf")
@@ -80,36 +80,41 @@ E_BB = -113e-3 # eV
 E_AB = -294e-3 # eV
 dE = E_AA + E_BB - 2*E_AB
 T_c = 2*dE/k_B
+T_c_exp = 468 + 273.15
 
-fig, axs = plt.subplots(4,1, figsize=(10,8))
+fig, axs = plt.subplots(4,1, figsize=(12,8))
 
-fig.suptitle(f"$T_{{c,task1}} = {T_c:.3f} \, \mathrm{{K}}$, $N_\mathrm{{eq}} = {n_eq_steps:.1e}$, $N = {n_steps:.1e}$")
+#fig.suptitle(f"$T_{{c,task1}} = {T_c:.3f} \, \mathrm{{K}}$, $N_\mathrm{{eq}} = {n_eq_steps:.1e}$, $N = {n_steps:.1e}$")
 
 
 plt.sca(axs[0])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.fill_between(T, E-E_std, E+E_std, alpha=0.5)
-plt.plot(T,E)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.fill_between(T, E-E_std, E+E_std, color="C0", alpha=0.3)
+plt.plot(T,E, color="C0")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$E \:/\: \mathrm{eV}$")
 
 plt.sca(axs[1])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.plot(T,C)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.plot(T,C, color="C1")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$C \:/\: \mathrm{eV \, K^{-1}}$")
 
 plt.sca(axs[2])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.fill_between(T, P-P_std, P+P_std, alpha=0.5)
-plt.plot(T,P)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.fill_between(T, P-P_std, P+P_std, color="C2", alpha=0.3)
+plt.plot(T,P, color="C2")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$P$")
 
 plt.sca(axs[3])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.fill_between(T, r-r_std, r+r_std, alpha=0.5)
-plt.plot(T,r)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.fill_between(T, r-r_std, r+r_std, color="C3", alpha=0.3)
+plt.plot(T,r, color="C3")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$r$")
 

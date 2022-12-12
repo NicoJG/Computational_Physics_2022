@@ -7,7 +7,9 @@
 ![Mm]akefile
 
 data/
+saved_data/
 images/
 plots/
+saved_plots/
 obj/
 __pycache__/

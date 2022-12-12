@@ -16,6 +16,7 @@ E_0_per_N = 2*(E_AA+E_BB+2*E_AB)
 dE = E_AA + E_BB - 2*E_AB
 
 T_c = 2*dE/k_B
+T_c_exp = 468 + 273.15
 
 T = np.linspace(0,1200,500) # K
 #T = np.linspace(906,1200,1000) # K
@@ -43,24 +44,27 @@ C_per_N = np.gradient(E_per_N, T)
 
 fig, axs = plt.subplots(1,3, figsize=(15,4))
 
-fig.suptitle(f"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
+#fig.suptitle(f"$T_c = {T_c:.3f} \, \mathrm{{K}}$")
 
 plt.sca(axs[0])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.plot(T,P)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.plot(T,P, color="C2")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$P$")
 
 plt.sca(axs[1])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.plot(T,E_per_N)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.plot(T,E_per_N, color="C0")
 #plt.plot(T,E_MFA_per_N)
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$E/N \:/\: \mathrm{eV}$")
 
 plt.sca(axs[2])
 plt.axvline(T_c, linestyle=":", color="k", alpha=0.5)
-plt.plot(T,C_per_N)
+plt.axvline(T_c_exp, linestyle="--", color="k", alpha=0.5)
+plt.plot(T,C_per_N, color="C1")
 plt.xlabel(r"$T \:/\: \mathrm{K}$")
 plt.ylabel(r"$C/N \:/\: \mathrm{eV \, K^{-1}}$")
 
