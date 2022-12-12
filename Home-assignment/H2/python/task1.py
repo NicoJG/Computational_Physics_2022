@@ -18,7 +18,7 @@ dE = E_AA + E_BB - 2*E_AB
 T_c = 2*dE/k_B
 T_c_exp = 468 + 273.15
 
-T = np.linspace(0,1200,500) # K
+T = np.linspace(0,1200,1200) # K
 #T = np.linspace(906,1200,1000) # K
 
 def F_per_N(P,T):

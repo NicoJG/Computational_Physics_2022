@@ -6,6 +6,7 @@
 
 #include "tools.h"
 #include "lattice_tools.h"
+#include "statistical_ineff.h"
 
 // physical constants
 const double k_B = 8.617333262e-5; // eV/K;
@@ -174,7 +175,8 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
                     int* atype, int** pos, int** nn_idxs, int idx_by_pos[n_cells][n_cells][n_cells][2],
                     bool save_steps, char* save_steps_file_path, gsl_rng* rng, int n_skip_saves,
                     double* E_avg, double* P_avg, double* r_avg,
-                    double* E_std, double* P_std, double* r_std, double* C) {
+                    double* E_std, double* P_std, double* r_std, double* C,
+                    double* s_corr, double* s_block) {
 
     // Monte Carlo Simulation, Metropolis Algorithm
     int n_tot_steps = n_eq_steps+n_steps;
@@ -198,6 +200,12 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
     double E_squared_avg = average(E_squared, n_steps);
     *C = (E_squared_avg - (*E_avg)*(*E_avg))/(k_B*T*T);
 
+
+    // calculate the statistical inefficiency
+    *s_corr = calc_s_corr(P+n_eq_steps, n_steps);
+
+
+    // save a few simulations with E(t),P(t),...
     if (save_steps) {
         int n_save_steps = n_tot_steps / n_skip_saves;
         printf("Save %i steps from %i for T = %.4f K ...\n", n_save_steps, n_tot_steps, T);
@@ -230,6 +238,10 @@ run(
     // 100% of you code
     gsl_rng* rng = init_rng(42);
 
+    int n_eq_steps = 0.5e6;
+    int n_steps = 4.5e6;
+    int n_skip_saves = 10;
+
     // make 3 sections of temperature, where around the critical temperature it more dense
     int T_0 = 300;
     int T_1 = 600;
@@ -242,7 +254,7 @@ run(
     // number of T steps in each section
     int n_T01 = (T_1-T_0)/dT01;
     int n_T12 = (T_2-T_1)/dT12;
-    int n_T23 = (T_3-T_2)/dT23;
+    int n_T23 = (T_3-T_2)/dT23 + 1; // plus the last one
     int n_T = n_T01 + n_T12 + n_T23;
 
     int n_T_saves = 10; // number of T's to fully save
@@ -267,10 +279,9 @@ run(
     double* P_std = (double*)malloc(n_T*sizeof(double));
     double* r_std = (double*)malloc(n_T*sizeof(double));
     double* C = (double*)malloc(n_T*sizeof(double));
+    double* s_corr = (double*)malloc(n_T*sizeof(double));
+    double* s_block = (double*)malloc(n_T*sizeof(double));
 
-    int n_eq_steps = 0.5e6;
-    int n_steps = 4.5e6;
-    int n_skip_saves = 10;
 
     // init the lattice completely ordered
     int* atype = (int*)malloc(N_atoms*sizeof(int));
@@ -291,17 +302,19 @@ run(
         perform_simulation(T[i], n_eq_steps, n_steps, 
                         atype, pos, nn_idxs, idx_by_pos,
                         save, save_step_file_path, rng, n_skip_saves,
-                        E+i, P+i, r+i,E_std+i, P_std+i, r_std+i, C+i);
+                        E+i, P+i, r+i,E_std+i, P_std+i, r_std+i, C+i,
+                        s_corr+i, s_block+i);
         printf("%i/%i done. (T = %.2f K)\n", i+1,n_T,T[i]);
     }
 
     // save the results
     FILE* file = fopen("data/H2a.csv", "w");
     fprintf(file, "# {\"n_eq_steps\": %i, \"n_steps\": %i}\n", n_eq_steps, n_steps);
-    fprintf(file, "# T[K], E[eV], E_std[eV], P, P_std, r, r_std, C[eV/K]\n");
+    fprintf(file, "# T[K], E[eV], E_std[eV], P, P_std, r, r_std, C[eV/K], s_corr, s_block\n");
     for (int i=0; i<n_T; i++) {
-        fprintf(file, "%.5f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f\n", 
-                T[i], E[i], E_std[i], P[i], P_std[i], r[i], r_std[i], C[i]);
+        fprintf(file, "%.5f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.1f, %.2f\n", 
+                T[i], E[i], E_std[i], P[i], P_std[i], r[i], r_std[i], C[i],
+                s_corr[i], s_block[i]);
     }
     fclose(file);
 
@@ -314,6 +327,8 @@ run(
     free(P_std);
     free(r_std);
     free(C);
+    free(s_corr);
+    free(s_block);
     gsl_rng_free(rng);
     free(atype);
     destroy_2D_int_array(pos);

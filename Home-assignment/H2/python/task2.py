@@ -62,7 +62,7 @@ plt.savefig(f"plots/H2a_simsteps.pdf")
     
 # plot the results
 print(f"Plot final results...")
-T, E, E_std, P, P_std, r, r_std, C = np.genfromtxt("data/H2a.csv", delimiter=",", unpack=True)
+T, E, E_std, P, P_std, r, r_std, C, s_corr, s_block = np.genfromtxt("data/H2a.csv", delimiter=",", unpack=True)
 
 # get header metadata
 with open("data/H2a.csv", "r") as file:

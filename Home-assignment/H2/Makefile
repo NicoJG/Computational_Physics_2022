@@ -22,6 +22,7 @@ LIB = \
 OBJ = \
       obj/tools.o \
       obj/lattice_tools.o \
+      obj/statistical_ineff.o \
       obj/run.o
 MAIN = \
        obj/main.o
