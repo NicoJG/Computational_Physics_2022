@@ -305,7 +305,7 @@ void print_progress(double current_value, double min_value, double max_value, bo
 	int curr_percent = (int)(100*(current_value-min_value)/(max_value-min_value));
 	if (curr_percent != percent) {
 		percent = curr_percent;
-		printf("\33[2K\r%i %% (%f / %f)", percent, current_value, max_value);
+		printf("\33[2K\r%i %% (%.0f / %.0f)", percent, current_value, max_value);
 		if(percent >= 100) {
 			printf("\n");
 		}

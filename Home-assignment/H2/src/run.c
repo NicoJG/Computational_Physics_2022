@@ -174,9 +174,9 @@ void metropolis_algorithm(int N_atoms, int n_steps, double T,
 void perform_simulation(double T, int n_eq_steps, int n_steps, 
                     int* atype, int** pos, int** nn_idxs, int idx_by_pos[n_cells][n_cells][n_cells][2],
                     bool save_steps, char* save_steps_file_path, gsl_rng* rng, int n_skip_saves,
-                    double* E_avg, double* P_avg, double* r_avg,
-                    double* E_std, double* P_std, double* r_std, double* C,
-                    double* s_corr, double* s_block) {
+                    double* E_avg, double* P_avg, double* r_avg, double* C,
+                    double* E_std, double* P_std, double* r_std,
+                    int* s_E, int* s_P, int* s_r) {
 
     // Monte Carlo Simulation, Metropolis Algorithm
     int n_tot_steps = n_eq_steps+n_steps;
@@ -202,7 +202,15 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
 
 
     // calculate the statistical inefficiency
-    *s_corr = calc_s_corr(P+n_eq_steps, n_steps);
+    
+    printf("Calculate statistical inefficiencies...");
+    print_progress(0,0,3,true);
+    *s_E = calc_s_corr(E+n_eq_steps, n_steps);
+    print_progress(1,0,3,false);
+    *s_P = calc_s_corr(P+n_eq_steps, n_steps);
+    print_progress(2,0,3,false);
+    *s_r = calc_s_corr(r+n_eq_steps, n_steps);
+    print_progress(3,0,3,false);
 
 
     // save a few simulations with E(t),P(t),...
@@ -248,9 +256,9 @@ run(
     int T_2 = 800;
     int T_3 = 1000;
     // delta T steps in the sections
-    int dT01 = 10;
-    int dT12 = 2;
-    int dT23 = 10;
+    int dT01 = 50;
+    int dT12 = 5;
+    int dT23 = 50;
     // number of T steps in each section
     int n_T01 = (T_1-T_0)/dT01;
     int n_T12 = (T_2-T_1)/dT12;
@@ -275,12 +283,13 @@ run(
     double* E = (double*)malloc(n_T*sizeof(double));
     double* P = (double*)malloc(n_T*sizeof(double));
     double* r = (double*)malloc(n_T*sizeof(double));
+    double* C = (double*)malloc(n_T*sizeof(double));
     double* E_std = (double*)malloc(n_T*sizeof(double));
     double* P_std = (double*)malloc(n_T*sizeof(double));
     double* r_std = (double*)malloc(n_T*sizeof(double));
-    double* C = (double*)malloc(n_T*sizeof(double));
-    double* s_corr = (double*)malloc(n_T*sizeof(double));
-    double* s_block = (double*)malloc(n_T*sizeof(double));
+    int* s_E = (int*)malloc(n_T*sizeof(int));
+    int* s_P = (int*)malloc(n_T*sizeof(int));
+    int* s_r = (int*)malloc(n_T*sizeof(int));
 
 
     // init the lattice completely ordered
@@ -302,19 +311,23 @@ run(
         perform_simulation(T[i], n_eq_steps, n_steps, 
                         atype, pos, nn_idxs, idx_by_pos,
                         save, save_step_file_path, rng, n_skip_saves,
-                        E+i, P+i, r+i,E_std+i, P_std+i, r_std+i, C+i,
-                        s_corr+i, s_block+i);
+                        E+i, P+i, r+i, C+i,
+                        E_std+i, P_std+i, r_std+i,
+                        s_E+i, s_P+i, s_r+i);
         printf("%i/%i done. (T = %.2f K)\n", i+1,n_T,T[i]);
     }
 
     // save the results
     FILE* file = fopen("data/H2a.csv", "w");
     fprintf(file, "# {\"n_eq_steps\": %i, \"n_steps\": %i}\n", n_eq_steps, n_steps);
-    fprintf(file, "# T[K], E[eV], E_std[eV], P, P_std, r, r_std, C[eV/K], s_corr, s_block\n");
+    fprintf(file, "# T[K], E[eV], E_std[eV], s_E, P, P_std, s_P, r, r_std, s_r, C[eV/K]\n");
     for (int i=0; i<n_T; i++) {
-        fprintf(file, "%.5f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.1f, %.2f\n", 
-                T[i], E[i], E_std[i], P[i], P_std[i], r[i], r_std[i], C[i],
-                s_corr[i], s_block[i]);
+        fprintf(file, "%.5f, %.10f, %.10f, %i, %.10f, %.10f, %i, %.10f, %.10f, %i, %.10f\n", 
+                T[i], 
+                E[i], E_std[i], s_E[i], 
+                P[i], P_std[i], s_P[i], 
+                r[i], r_std[i], s_r[i], 
+                C[i]);
     }
     fclose(file);
 
@@ -323,12 +336,13 @@ run(
     free(E);
     free(P);
     free(r);
+    free(C);
     free(E_std);
     free(P_std);
     free(r_std);
-    free(C);
-    free(s_corr);
-    free(s_block);
+    free(s_E);
+    free(s_P);
+    free(s_r);
     gsl_rng_free(rng);
     free(atype);
     destroy_2D_int_array(pos);

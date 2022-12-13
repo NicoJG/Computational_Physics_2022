@@ -16,6 +16,11 @@ double calc_corr_func(double* f, double f2_mean, double f_mean2, int k, int n_f)
     return (ff_mean - f_mean2)/(f2_mean - f_mean2);
 }
 
+double calc_all_corr_func(double* f, int n_f) {
+    // calculate corr func for all k
+
+}
+
 double calc_s_corr(double* f, int n_f) {
     // calculate the statistical inefficiency through the correlation function
     // use binary search to find the k so that the correlation function is at exp(-2)
@@ -39,11 +44,22 @@ double calc_s_corr(double* f, int n_f) {
     // assumption: phi(k<k0)>= exp(-2) and phi(k>k0)< exp(-2)
     // (hopefully true)
     double Phi_wanted = exp(-2);
-    int k_low = 1;
-    int k_high = n_f;
+
+    // start with a rough search going for higher values until its lower
+    double rough_step_scaler = 2.0;
+    double temp_k = 1;
+    double temp_Phi = calc_corr_func(f_shifted, f2_mean, f_mean2, (int)(temp_k), n_f);
+    int n_steps_rough = 1;
+    while (temp_Phi > Phi_wanted && (temp_k*rough_step_scaler) < n_f) {
+        temp_k *= rough_step_scaler;
+        temp_Phi = calc_corr_func(f_shifted, f2_mean, f_mean2, (int)(temp_k), n_f);
+        n_steps_rough++;
+    }
+    int k_low = (int)(temp_k/rough_step_scaler);
+    int k_high = (int)temp_k;
     double Phi_k_low = calc_corr_func(f_shifted, f2_mean, f_mean2, k_low, n_f);
-    double Phi_k_high = calc_corr_func(f_shifted, f2_mean, f_mean2, k_high, n_f);
-    int n_steps_binary = 0;
+    double Phi_k_high = temp_Phi;
+    int n_steps_binary = 1;
     while (k_high-k_low > 1) {
         if (Phi_k_low < Phi_wanted || Phi_k_high >= Phi_wanted) {
             // assumption probably does not hold
@@ -65,6 +81,17 @@ double calc_s_corr(double* f, int n_f) {
         //printf("k_low = %i; k_high = %i ; Phi_k_low = %f; Phi_k_high = %f\n",k_low,k_high,Phi_k_low,Phi_k_high);
         n_steps_binary++;
     }
-    printf("n_steps_binary_search = %i; s_corr = %i\n", n_steps_binary, k_high);
+    // check if Phi wanted is still in the found range
+    if (Phi_k_low < Phi_wanted || Phi_k_high >= Phi_wanted) {
+        // assumption probably does not hold
+        // Phi_wanted is not in the range k_low, k_high anymore
+        printf("ERROR: Binary search found the wrong range. (Phi_wanted = %.5f)\n", Phi_wanted);
+        printf("ERROR: k_low = %i, Phi_k_low = %.5f\n", k_low, Phi_k_low);
+        printf("ERROR: k_high = %i, Phi_k_high = %.5f\n", k_high, Phi_k_high);
+        exit(1);
+    }
+
+    //printf("n_steps_rough = %i; n_steps_binary_search = %i; s_corr = %i\n", n_steps_rough, n_steps_binary, k_high);
+    free(f_shifted);
     return k_high;
 }
