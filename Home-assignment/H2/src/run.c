@@ -203,7 +203,7 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
 
     // calculate the statistical inefficiency
     
-    printf("Calculate statistical inefficiencies...");
+    printf("Calculate statistical inefficiencies...\n");
     print_progress(0,0,3,true);
     *s_E = calc_s_corr(E+n_eq_steps, n_steps);
     print_progress(1,0,3,false);
@@ -225,7 +225,35 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
         for (int i_step=0; i_step<n_eq_steps+n_steps; i_step+=n_skip_saves) {
             fprintf(file, "%i, %.10e, %.10e, %.10e\n", i_step, E[i_step], P[i_step], r[i_step]);
         }
-        fclose(file);    
+        fclose(file); 
+
+        // calculate the correlation function
+        printf("Calculate and save the correlation function...\n");
+        int k_min = (*s_E)/100;
+        int k_max = (*s_E)*10;
+        int k_step = (*s_E)/100;
+        int n_k = (k_max-k_min)/k_step + 1; 
+        int* k = (int*)malloc(n_k*sizeof(int));
+        double* Phi = (double*)malloc(n_k*sizeof(double));
+        for (int i=0; i<n_k; i++) {
+            k[i] = k_min + i*k_step;
+        }  
+        calc_all_corr_func(E+n_eq_steps, n_steps, k, Phi, n_k);
+
+        // save the file to data/corr_simulations/
+        save_steps_file_path[5] = 'c';
+        save_steps_file_path[6] = 'o';
+        save_steps_file_path[7] = 'r';
+        save_steps_file_path[8] = 'r';
+        file = fopen(save_steps_file_path, "w");
+        fprintf(file, "# {\"s_E\": %i, \"T[K]\": %.2f}\n", *s_E, T);
+        fprintf(file, "# k, Phi(E,k)\n");
+        for (int i=0; i<n_k; i++) {
+            fprintf(file, "%i, %.10f\n",k[i], Phi[i]);
+        }
+        fclose(file);
+        free(k);
+        free(Phi);
     }
 
     // tidy up
@@ -265,7 +293,7 @@ run(
     int n_T23 = (T_3-T_2)/dT23 + 1; // plus the last one
     int n_T = n_T01 + n_T12 + n_T23;
 
-    int n_T_saves = 10; // number of T's to fully save
+    int n_T_saves = 5; // number of T's to fully save
 
     double* T = (double*)malloc(n_T*sizeof(double));
     double temp_T = T_0;

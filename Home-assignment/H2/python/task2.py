@@ -84,60 +84,90 @@ plt.savefig("plots/H2a_stat_ineff.pdf")
 
 
 # Plot a few full simulations
-# full_simulations_dir = Path("data/full_simulations/")
-# fig, axs = plt.subplots(3,1, figsize=(10,8))
+full_simulations_dir = Path("data/full_simulations/")
+fig, axs = plt.subplots(3,1, figsize=(10,8))
 
-# #fig.suptitle(f"$T = {T:2f} \,\mathrm{{K}}$, $N_\mathrm{{eq}} = {n_eq_steps:.1e}$, \n$<P> = {P_avg:.4f} \mathrm{{eV}}$, $<E> = {E_avg:.4f} \mathrm{{eV}}$, $<C> = {C:.4f} \mathrm{{eV/K}}$, $<r> = {r_avg:.4f}$")
-# for full_simulation_file in full_simulations_dir.iterdir():
-#     # get header metadata
-#     with open(full_simulation_file, "r") as file:
-#         metadata_str = "".join([file.readline() for i in range(2)])
-#         metadata_str = metadata_str.replace("# ","")
-#         metadata = json.loads(metadata_str)
+#fig.suptitle(f"$T = {T:2f} \,\mathrm{{K}}$, $N_\mathrm{{eq}} = {n_eq_steps:.1e}$, \n$<P> = {P_avg:.4f} \mathrm{{eV}}$, $<E> = {E_avg:.4f} \mathrm{{eV}}$, $<C> = {C:.4f} \mathrm{{eV/K}}$, $<r> = {r_avg:.4f}$")
+for full_simulation_file in full_simulations_dir.iterdir():
+    # get header metadata
+    with open(full_simulation_file, "r") as file:
+        metadata_str = "".join([file.readline() for i in range(2)])
+        metadata_str = metadata_str.replace("# ","")
+        metadata = json.loads(metadata_str)
         
-#     T = metadata["T[K]"]
-#     n_eq_steps = metadata["n_eq_steps"]
+    T = metadata["T[K]"]
+    n_eq_steps = metadata["n_eq_steps"]
     
-#     E_avg = metadata["E[eV]"]
-#     P_avg = metadata["P"]
-#     r_avg = metadata["r"]
-#     C = metadata["C[eV/K]"]
+    E_avg = metadata["E[eV]"]
+    P_avg = metadata["P"]
+    r_avg = metadata["r"]
+    C = metadata["C[eV/K]"]
     
-#     print(f"Plot full simulation T={T:.2f} K ...")
+    print(f"Plot full simulation T={T:.2f} K ...")
     
-#     i_step, E, P, r = np.genfromtxt(full_simulation_file, delimiter=",", unpack=True)
+    i_step, E, P, r = np.genfromtxt(full_simulation_file, delimiter=",", unpack=True)
     
-#     plt.sca(axs[0])
-#     plt.plot(i_step, P, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
+    plt.sca(axs[0])
+    plt.plot(i_step, P, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
     
-#     plt.sca(axs[1])
-#     plt.plot(i_step, E, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
+    plt.sca(axs[1])
+    plt.plot(i_step, E, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
     
-#     plt.sca(axs[2])
-#     plt.plot(i_step, r, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
+    plt.sca(axs[2])
+    plt.plot(i_step, r, label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
     
 
-# plt.sca(axs[0])
-# plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
-# plt.xlabel("simulation step")
-# plt.ylabel("P")
-# plt.legend(loc="center right")
+plt.sca(axs[0])
+plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
+plt.xlabel("simulation step")
+plt.ylabel("P")
+plt.legend(loc="center right")
 
-# plt.sca(axs[1])
-# plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
-# plt.xlabel("simulation step")
-# plt.ylabel("energy / eV")
-# plt.legend(loc="center right")
+plt.sca(axs[1])
+plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
+plt.xlabel("simulation step")
+plt.ylabel("energy / eV")
+plt.legend(loc="center right")
 
-# plt.sca(axs[2])
-# plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
-# plt.xlabel("simulation step")
-# plt.ylabel("r")
-# plt.legend(loc="center right")
+plt.sca(axs[2])
+plt.axvline(n_eq_steps, linestyle="--", color="k", alpha=0.5, label=rf"$N_\mathrm{{eq}} = {n_eq_steps:.1e}$")
+plt.xlabel("simulation step")
+plt.ylabel("r")
+plt.legend(loc="center right")
     
-# plt.tight_layout()
-# plt.savefig(f"plots/H2a_simsteps.pdf")
+plt.tight_layout()
+plt.savefig(f"plots/H2a_simsteps.pdf")
     
+
+# Plot a few full simulation correlation functions
+corr_simulations_dir = Path("data/corr_simulations/")
+plt.figure(figsize=(5,4))
+
+for i,corr_simulation_file in enumerate(corr_simulations_dir.iterdir()):
+    # get header metadata
+    with open(corr_simulation_file, "r") as file:
+        metadata_str = "".join([file.readline() for i in range(1)])
+        metadata_str = metadata_str.replace("# ","")
+        metadata = json.loads(metadata_str)
+        
+    T = metadata["T[K]"]
+    s_E = metadata["s_E"]
     
+    print(f"Plot correlation function T={T:.2f} K ...")
+    
+    k, Phi = np.genfromtxt(corr_simulation_file, delimiter=",", unpack=True)
+    
+    plt.plot(k, Phi, color=f"C{i}", label=f"$T = {T:.2f} \\mathrm{{K}}$", rasterized=True)
+    plt.axvline(s_E, linestyle="--", color=f"C{i}", alpha=0.5)
+    
+plt.axhline(np.exp(-2), linestyle=":", color="k", alpha=0.5, label=f"$\exp(-2)$")
+plt.xscale("log")
+#plt.yscale("log")
+plt.xlabel("$k$")
+plt.ylabel(r"$\Phi_E(k)$")
+plt.legend(loc="lower left")
+    
+plt.tight_layout()
+plt.savefig(f"plots/H2a_corr_func.pdf")
 
 # %%

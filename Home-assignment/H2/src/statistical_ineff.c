@@ -16,9 +16,29 @@ double calc_corr_func(double* f, double f2_mean, double f_mean2, int k, int n_f)
     return (ff_mean - f_mean2)/(f2_mean - f_mean2);
 }
 
-double calc_all_corr_func(double* f, int n_f) {
-    // calculate corr func for all k
+void calc_all_corr_func(double* f, int n_f, int* k, double* Phi, int n_k) {
+    // calculate corr func for all given k
+    
+    // first shift f  
+    double f_mean = average(f, n_f);
+    double* f_shifted = (double*)malloc(n_f*sizeof(double));
+    for (int i=0; i<n_f; i++) {
+        f_shifted[i] = f[i] - f_mean;
+    }
+    // calculate <f^2> and <f>^2
+    double* f_squared = (double*)malloc(n_f*sizeof(double));
+    elementwise_multiplication(f_squared, f_shifted, f_shifted, n_f);
+    double f2_mean = average(f_squared, n_f);
+    double f_mean2 = 0;
+    free(f_squared);
 
+    print_progress(0,0,n_k,true);
+    for (int i=0; i<n_k; i++) {
+        Phi[i] = calc_corr_func(f_shifted, f2_mean, f_mean2, k[i], n_f);
+        print_progress(i+1,0,n_k,false);
+    }
+
+    free(f_shifted);
 }
 
 double calc_s_corr(double* f, int n_f) {

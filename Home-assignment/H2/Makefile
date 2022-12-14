@@ -47,6 +47,8 @@ plots/task2.pdf: python/task2.py data/H2a.csv | plots
 data/H2a.csv: obj H2 | data
 	rm -rf data/full_simulations/
 	mkdir data/full_simulations/
+	rm -rf data/corr_simulations/
+	mkdir data/corr_simulations/
 	./H2
 
 H2: $(MAIN) $(OBJ)
