@@ -284,16 +284,17 @@ run(
     int T_2 = 800;
     int T_3 = 1000;
     // delta T steps in the sections
-    int dT01 = 50;
-    int dT12 = 5;
-    int dT23 = 50;
+    int dT01 = 20;
+    int dT12 = 1;
+    int dT23 = 20;
     // number of T steps in each section
     int n_T01 = (T_1-T_0)/dT01;
     int n_T12 = (T_2-T_1)/dT12;
     int n_T23 = (T_3-T_2)/dT23 + 1; // plus the last one
     int n_T = n_T01 + n_T12 + n_T23;
 
-    int n_T_saves = 5; // number of T's to fully save
+    int T_saves[] = {300, 650, 700, 750, 900};
+    int n_T_saves = sizeof(T_saves)/sizeof(T_saves[0]);
 
     double* T = (double*)malloc(n_T*sizeof(double));
     double temp_T = T_0;
@@ -332,9 +333,12 @@ run(
         bool save = false;
         char save_step_file_path[100];
         // check if this step should be saved
-        if (i%((n_T-1)/(n_T_saves-1)) == 0) {
-            save = true;
-            sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_%0*i_T%.0fK.csv", ((int)log10(n_T))+1, i, T[i]);
+        for (int j=0; j<n_T_saves; j++) {
+            if (T_saves[j] == T[i]) {
+                save = true;
+                sprintf(save_step_file_path, "data/full_simulations/H2a_simsteps_%0*i_T%.0fK.csv", ((int)log10(n_T))+1, i, T[i]);
+                break;
+            }
         }
         perform_simulation(T[i], n_eq_steps, n_steps, 
                         atype, pos, nn_idxs, idx_by_pos,
