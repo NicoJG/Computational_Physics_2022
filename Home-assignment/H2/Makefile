@@ -49,6 +49,8 @@ data/H2a.csv: obj H2 | data
 	mkdir data/full_simulations/
 	rm -rf data/corr_simulations/
 	mkdir data/corr_simulations/
+	rm -rf data/blok_simulations/
+	mkdir data/blok_simulations/
 	./H2
 
 H2: $(MAIN) $(OBJ)

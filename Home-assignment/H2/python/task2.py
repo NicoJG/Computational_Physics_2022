@@ -115,7 +115,7 @@ plt.savefig("plots/task2_uncertainties.pdf")
 
 
 # plot the statistical inefficiency
-plt.figure(figsize=(4,3))
+plt.figure(figsize=(8,3))
 plt.plot(T,s_E, "C0", label="$s(E)$ and \n$s(r)$")
 plt.plot(T,s_P, "C2", label="$s(P)$")
 #plt.plot(T,s_r, "C3", linestyle=":", label="$s(r)$")
@@ -213,5 +213,38 @@ plt.legend(loc="lower left")
     
 plt.tight_layout()
 plt.savefig(f"plots/H2a_corr_func.pdf")
+
+
+
+
+# Plot a few simulation block averages
+blok_simulations_dir = Path("data/blok_simulations/")
+plt.figure(figsize=(4,3))
+
+for i,blok_simulation_file in enumerate(blok_simulations_dir.iterdir()):
+    # get header metadata
+    with open(blok_simulation_file, "r") as file:
+        metadata_str = "".join([file.readline() for i in range(1)])
+        metadata_str = metadata_str.replace("# ","")
+        metadata = json.loads(metadata_str)
+        
+    T = metadata["T[K]"]
+    s_E = metadata["s_E"]
+    
+    print(f"Plot block averaging T={T:.0f} K ...")
+    
+    B, s = np.genfromtxt(blok_simulation_file, delimiter=",", unpack=True)
+    
+    plt.plot(B, s, color=f"C{i}", label=f"$T = {T:.0f} \\mathrm{{K}}$")
+    plt.axhline(s_E, linestyle="--", color=f"C{i}", alpha=0.5)
+    
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel("$B$ (block size)")
+plt.ylabel(r"$s$ (statistical inefficiency)")
+plt.legend(loc="upper left")
+    
+plt.tight_layout()
+plt.savefig(f"plots/H2a_block_avg.pdf")
 
 # %%

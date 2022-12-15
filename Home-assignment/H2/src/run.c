@@ -254,6 +254,39 @@ void perform_simulation(double T, int n_eq_steps, int n_steps,
         fclose(file);
         free(k);
         free(Phi);
+
+        // calculate the block average statistical inefficiencies
+        printf("Calculate and save the block averaging...\n");
+        int n_B = 1000;
+        int B_min = 1e4;
+        int B_max = 1e6;
+        double logB_min = log10(B_min);
+        double logB_max = log10(B_max);
+        double dlogB = (logB_max-logB_min)/(n_B-1);
+        int* B = (int*)malloc(n_B*sizeof(int));
+        double* s = (double*)malloc(n_B*sizeof(double));
+        print_progress(0,0,n_B,true);
+        for (int j=0; j<n_B; j++) {
+            B[j] = (int)pow(10.,logB_min + j*dlogB);
+            s[j] = calc_s_block_avg(E+n_eq_steps, (*E_std)*(*E_std), B[j], n_steps);
+            print_progress(j+1,0,n_B,false);
+        }
+
+        // write the block average statistical inefficiencies to a file
+        // to data/blok_simulations/
+        save_steps_file_path[5] = 'b';
+        save_steps_file_path[6] = 'l';
+        save_steps_file_path[7] = 'o';
+        save_steps_file_path[8] = 'k';
+        file = fopen(save_steps_file_path, "w");
+        fprintf(file, "# {\"s_E\": %i, \"T[K]\": %.2f}\n", *s_E, T);
+        fprintf(file, "# B, s_E\n");
+        for (int i=0; i<n_B; i++) {
+            fprintf(file, "%i, %.10f\n",B[i], s[i]);
+        }
+        free(B);
+        free(s);
+        fclose(file);
     }
 
     // tidy up

@@ -115,3 +115,20 @@ double calc_s_corr(double* f, int n_f) {
     free(f_shifted);
     return k_high;
 }
+
+
+double calc_s_block_avg(double* f, double f_variance, int B, int n_f) {
+    int n_F = n_f/B;
+    // the last block might not be full
+    //if (n_f%B!=0) {
+    //    n_F++;
+    //}
+    double* F = (double*)malloc(n_F*sizeof(double));
+    for (int i=0; i<n_F; i++) {
+        F[i] = average(f+i*B, B);
+    }
+    double F_variance = standard_deviation(F, n_F);
+    F_variance *= F_variance;
+    free(F);
+    return B*(F_variance/f_variance);
+}
