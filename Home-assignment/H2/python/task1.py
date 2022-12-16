@@ -31,7 +31,7 @@ def F_per_N(P,T):
 P_0 = 0.5
 P = []
 for T_i in tqdm(T):
-    P_0 = minimize(F_per_N, P_0, args=T_i, bounds=((0,1),)).x[0]
+    P_0 = minimize(F_per_N, P_0, args=T_i, bounds=((0,1),), tol=1e-10).x[0]
     P.append(P_0)
 P = np.array(P)
 
