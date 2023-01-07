@@ -1,11 +1,17 @@
 CC = gcc
 
 CFLAGS = \
-	 -g \
-	 -Iinclude
+	 -Iinclude \
+	 -Werror
+
+CFLAGS_debug = \
+	-g \
+	-fsanitize=address \
+	-fno-omit-frame-pointer \
+	-O0
 
 CFLAGS_OPT = \
-	     -O2 \
+	     -O3 \
 	     -march=native
 
 LIB = \
@@ -23,13 +29,21 @@ ifeq ($(MAKECMDGOALS),test)
 OBJ_TEST = $(patsubst obj/%.o,obj_test/%.o,$(OBJ))
 -include unit-test/test.mk
 else
-CFLAGS += $(CFLAGS_OPT)
+CFLAGS += $(CFLAGS_debug) 
 endif
 
-H3: obj _H3
+all: data/task1.csv plotting
 
-_H3: $(MAIN) $(OBJ)
-	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
+plotting: plots/task1.pdf
+
+plots/task1.pdf: python/task1.py | plots
+	python python/task1.py
+
+data/task1.csv: obj H3 | data
+	./H3
+
+H3: $(MAIN) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
 
 obj/%.o: src/%.c
 	$(CC) -MMD -c $(CFLAGS) $< -o $@ 
@@ -37,10 +51,19 @@ obj/%.o: src/%.c
 obj:
 	mkdir -p obj
 
+data:
+	mkdir -p data
+
+plots:
+	mkdir -p plots
+
 clean:
 	find -iname "*.o" -exec rm {} \;
 	find -iname "*.d" -exec rm {} \;
-	rm -f H3 run-test
+	rm -f program run-test
 	rm -rf obj obj_test
+	rm -rf data
+	rm -rf plots
+	rm -f ./H2
 
 .PHONY: clean
