@@ -34,16 +34,13 @@ endif
 
 all: data/task1.csv plotting
 
-plotting: plots/task1.pdf plots/task2.pdf plots/task3.pdf
+plotting: plots/task1.pdf plots/task2.pdf
 
 plots/task1.pdf: python/task1.py data/task1.csv | plots
 	python python/task1.py
 
-plots/task2.pdf: python/task2.py data/task2.csv | plots
-	python python/task2.py
-
-plots/task3.pdf: python/task3.py data/task3.csv | plots
-	python python/task3.py
+plots/task2.pdf: python/plots_helium.py data/task2.csv data/task3_1st_order.csv | plots
+	python python/plots_helium.py
 
 data/task1.csv: obj H3 | data
 	./H3
