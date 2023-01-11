@@ -57,4 +57,26 @@ plot_dmc("data/task2.csv", "plots/task2.pdf", E0_exact)
 # Task 3
 ################################################
 print("Plotting Task 3...")
+print("-First Order...")
 plot_dmc("data/task3_1st_order.csv", "plots/task3_1st_order.pdf", E0_exact)
+print("-Second Order...")
+plot_dmc("data/task3_2nd_order.csv", "plots/task3_2nd_order.pdf", E0_exact)
+
+
+
+
+################################################
+# Task 4
+################################################
+print("Plotting Task 4...")
+dtau, E_T_1st_order, E_T_std_1st_order, E_T_2nd_order, E_T_std_2nd_order = np.genfromtxt("data/task4.csv", delimiter=",", unpack=True)
+
+plt.figure(figsize=(5,4))
+plt.axhline(E0_exact, color="k", linestyle="--", alpha=0.5, label=f"$E_0 = {E0_exact:.4f}$")
+plt.errorbar(dtau, E_T_1st_order, yerr=E_T_std_1st_order, fmt="x", label="1st order")
+plt.errorbar(dtau, E_T_2nd_order, yerr=E_T_std_2nd_order, fmt="x", label="2nd order")
+plt.xlabel(r"$\Delta \tau \: / \:$(a.u.)")
+plt.ylabel(r"$E_T \: / \:$(a.u.)")
+plt.legend()
+plt.tight_layout()
+plt.savefig("plots/task4.pdf")

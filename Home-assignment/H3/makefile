@@ -39,7 +39,7 @@ plotting: plots/task1.pdf plots/task2.pdf
 plots/task1.pdf: python/task1.py data/task1.csv | plots
 	python python/task1.py
 
-plots/task2.pdf: python/plots_helium.py data/task2.csv data/task3_1st_order.csv | plots
+plots/task2.pdf: python/plots_helium.py data/task2.csv data/task3_1st_order.csv data/task3_2nd_order.csv | plots
 	python python/plots_helium.py
 
 data/task1.csv: obj H3 | data

@@ -165,11 +165,9 @@ double V_helium(double* R) {
     return - 2/r1 - 2/r2 + 1/r12;
 }
 
-void perform_drift_part(double* R, double alpha, double dtau) {
-    double v_F[6] = {0};
+void calc_v_F(double* R, double* v_F, double alpha) {
     double temp[3];
     double temp2[3];
-    double temp3[6];
 
     double r1[3] = {R[0], R[1], R[2]};
     double r2[3] = {R[3], R[4], R[5]};
@@ -188,9 +186,32 @@ void perform_drift_part(double* R, double alpha, double dtau) {
     constant_multiplication(temp, r2, -2., 3);
     constant_multiplication(temp2, r12, +1/(2*(1 + alpha*r12_len)*(1 + alpha*r12_len)), 3);
     elementwise_addition(v_F+3, temp, temp2, 3);
+}
 
-    constant_multiplication(temp3, v_F, dtau, 6);
-    elementwise_addition(R, temp3, R, 6);
+void perform_drift_part_1st_order(double* R, double alpha, double dtau) {
+    double v_F[6];
+    double temp[6];
+
+    calc_v_F(R, v_F, alpha);
+
+    constant_multiplication(temp, v_F, dtau, 6);
+    elementwise_addition(R, temp, R, 6);
+}
+
+void perform_drift_part_2nd_order(double* R, double alpha, double dtau) {
+    double R_half[6];
+    double v_F[6];
+    double temp[6];
+
+    // calculate R_1/2
+    calc_v_F(R, v_F, alpha);
+    constant_multiplication(temp, v_F, dtau/2, 6);
+    elementwise_addition(R_half, temp, R, 6);
+
+    // calculate R
+    calc_v_F(R_half, v_F, alpha);
+    constant_multiplication(temp, v_F, dtau/2, 6);
+    elementwise_addition(R, temp, R, 6);
 }
 
 double E_L(double* R, double alpha) {
@@ -263,17 +284,17 @@ void perform_diffusion_monte_carlo(gsl_rng* rng,
             }
 
             if (importance_sampling) {
-                perform_drift_part(R[i_walker], alpha, dtau);
+                if (first_order) {
+                    perform_drift_part_1st_order(R[i_walker], alpha, dtau);
+                } else {
+                    perform_drift_part_2nd_order(R[i_walker], alpha, dtau);
+                }
             }
 
             // reactive part
             double W;
             if (importance_sampling) {
-                if (first_order) {
-                    W = exp(-(E_L(R[i_walker], alpha) - E_T)*dtau);
-                } else {
-
-                }
+                W = exp(-(E_L(R[i_walker], alpha) - E_T)*dtau);
             } else {
                 W = exp(-(V_helium(R[i_walker]) - E_T)*dtau);
             }
@@ -403,7 +424,8 @@ run(
     ///////////////////////////////////////////////
     printf("Task 3...\n");
     // take N0, N_max, R0, E_T0 from after task 2
-    // first with first order
+    // first order
+    printf("-First Order...\n");
     gamma = 0.5;
     alpha = 0.15;
     dtau = 0.1;
@@ -427,8 +449,79 @@ run(
                             n_eq_steps, n_steps,
                             N_arr, E_T_arr);
 
+    // second order
+    printf("-Second Order...\n");
+    first_order = false;
+    filepath = "data/task3_2nd_order.csv";
+    
+    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+                                R0, N0, N_max, E_T0, gamma, dtau, alpha,
+                                n_eq_steps, n_prod_steps, 
+                                R0, &N0, &E_T0,
+                                N_arr, E_T_arr);
+    save_diffusion_monte_carlo(filepath, gamma, dtau, 
+                            n_eq_steps, n_steps,
+                            N_arr, E_T_arr);
+
+
     free(N_arr);
     free(E_T_arr);
+
+
+    ///////////////////////////////////////////////
+    // task 4
+    ///////////////////////////////////////////////
+    // take N0, N_max, R0, E_T0 from after task 3
+    printf("Task 4...\n");
+    gamma = 0.5;
+    alpha = 0.15;
+    importance_sampling = true;
+
+    double dtau_arr[] = {0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4}; 
+    int n_dtau = sizeof(dtau_arr)/sizeof(double);
+
+    double* E_T_1st_order = (double*)malloc(n_dtau*sizeof(double));
+    double* E_T_2nd_order = (double*)malloc(n_dtau*sizeof(double));
+    double* E_T_std_1st_order = (double*)malloc(n_dtau*sizeof(double));
+    double* E_T_std_2nd_order = (double*)malloc(n_dtau*sizeof(double));
+
+    print_progress(0, 0, n_dtau, true);
+    for (int i=0; i<n_dtau; i++) {
+        dtau = dtau_arr[i];
+        n_eq_steps = 100/dtau;
+        n_prod_steps = 400/dtau;
+        n_steps = n_eq_steps+n_prod_steps;
+
+        N_arr = (int*)malloc((n_steps+1)*sizeof(int));
+        E_T_arr = (double*)malloc((n_steps+1)*sizeof(double));
+
+        first_order = true;
+        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+                                R0, N0, N_max, E_T0, gamma, dtau, alpha,
+                                n_eq_steps, n_prod_steps, 
+                                R0, &N0, &E_T0,
+                                N_arr, E_T_arr);
+        E_T_1st_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
+        E_T_std_1st_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
+        first_order = false;
+        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+                                R0, N0, N_max, E_T0, gamma, dtau, alpha,
+                                n_eq_steps, n_prod_steps, 
+                                R0, &N0, &E_T0,
+                                N_arr, E_T_arr);
+        E_T_2nd_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
+        E_T_std_2nd_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
+
+        print_progress(i+1,0,n_dtau, false);
+    }
+
+    // save task 4 results
+    FILE* file = fopen("data/task4.csv", "w");
+    fprintf(file, "# dtau, E_T_1st_order, E_T_std_1st_order, E_T_2nd_order, E_T_std_2nd_order\n");
+    for (int i=0; i<n_dtau; i++) {
+        fprintf(file, "%.5f, %.5f, %.5f, %.5f, %.5f\n", dtau_arr[i], E_T_1st_order[i], E_T_std_1st_order[i], E_T_2nd_order[i], E_T_std_2nd_order[i]);
+    }
+    fclose(file);
     
     gsl_rng_free(rng);
     destroy_2D_array(R0);
