@@ -76,12 +76,12 @@ phi0 = np.sqrt(2) * np.exp(-np.exp(-x_lin)-x_lin/2)
 mask2 = i_step>=n_eq_steps
 weights = 1./N[i_step.astype(int)]
 
-mean_hist, bin_edges = np.histogram(x[mask2], bins=40, weights=weights[mask2], density=True)
+mean_hist, bin_edges = np.histogram(x[mask2], bins=100, weights=weights[mask2], density=True)
 bin_centers = (bin_edges[:-1]+bin_edges[1:])/2
 
 #mean_hist = 
 plt.sca(axs[1])
-plt.plot(phi0**2,x_lin)
+plt.plot(phi0,x_lin)
 plt.hist(bin_centers, bins=bin_edges, weights=mean_hist, orientation="horizontal")
 plt.xlabel("$\Phi_0$")
 plt.ylabel(r"$x \: / \:$ a.u.")

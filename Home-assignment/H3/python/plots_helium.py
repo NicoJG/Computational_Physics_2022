@@ -77,6 +77,7 @@ plt.errorbar(dtau, E_T_1st_order, yerr=E_T_std_1st_order, fmt="x", label="1st or
 plt.errorbar(dtau, E_T_2nd_order, yerr=E_T_std_2nd_order, fmt="x", label="2nd order")
 plt.xlabel(r"$\Delta \tau \: / \:$(a.u.)")
 plt.ylabel(r"$E_T \: / \:$(a.u.)")
+plt.xlim(0,dtau.max())
 plt.legend()
 plt.tight_layout()
 plt.savefig("plots/task4.pdf")

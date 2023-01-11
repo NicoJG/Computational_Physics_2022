@@ -278,17 +278,19 @@ void perform_diffusion_monte_carlo(gsl_rng* rng,
     for (int i_step=1; i_step<n_steps+1; i_step++) {
         int i_temp = 0;
         for (int i_walker=0; i_walker<N; i_walker++) {
-            // diffusive part
-            for (int i_coord=0; i_coord<6; i_coord++) {
-                R[i_walker][i_coord] = R[i_walker][i_coord] + sqrt_dtau*gsl_ran_gaussian(rng, 1);
-            }
-
+            
+            // drift part
             if (importance_sampling) {
                 if (first_order) {
                     perform_drift_part_1st_order(R[i_walker], alpha, dtau);
                 } else {
                     perform_drift_part_2nd_order(R[i_walker], alpha, dtau);
                 }
+            }
+
+            // diffusive part
+            for (int i_coord=0; i_coord<6; i_coord++) {
+                R[i_walker][i_coord] = R[i_walker][i_coord] + sqrt_dtau*gsl_ran_gaussian(rng, 1);
             }
 
             // reactive part
@@ -300,6 +302,13 @@ void perform_diffusion_monte_carlo(gsl_rng* rng,
             }
 
             int m = (int)(W + gsl_rng_uniform(rng));
+
+            // sometimes N explodes and we want to prevent this
+            if (m>N/2.) {
+                printf("WARNING: m = %i in step %i for walker %i/%i\n",m,i_step,i_walker, N);
+                m = 100;
+            }
+
             // copy the walker m times into temp_x for the next step
             for (int i_copy=0; i_copy<m; i_copy++) {
                 for (int i_coord=0; i_coord<6; i_coord++) {
@@ -389,8 +398,8 @@ run(
     double gamma = 0.5;
     double alpha = 0;
     double dtau = 0.01;
-    int n_eq_steps = 1000;
-    int n_prod_steps = 4000;
+    int n_eq_steps = 10000;
+    int n_prod_steps = 40000;
     int n_steps = n_eq_steps+n_prod_steps;
     bool importance_sampling = false;
     bool first_order = true;
@@ -477,7 +486,7 @@ run(
     alpha = 0.15;
     importance_sampling = true;
 
-    double dtau_arr[] = {0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4}; 
+    double dtau_arr[] = {0.05, 0.1, 0.15, 0.2, 0.3, 0.4}; 
     int n_dtau = sizeof(dtau_arr)/sizeof(double);
 
     double* E_T_1st_order = (double*)malloc(n_dtau*sizeof(double));
@@ -512,6 +521,8 @@ run(
         E_T_2nd_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
         E_T_std_2nd_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
 
+        free(N_arr);
+        free(E_T_arr);
         print_progress(i+1,0,n_dtau, false);
     }
 
@@ -523,6 +534,10 @@ run(
     }
     fclose(file);
     
+    free(E_T_1st_order);
+    free(E_T_std_1st_order);
+    free(E_T_2nd_order);
+    free(E_T_std_2nd_order);
     gsl_rng_free(rng);
     destroy_2D_array(R0);
     return 0;
