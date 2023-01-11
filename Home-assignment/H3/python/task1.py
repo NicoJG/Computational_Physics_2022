@@ -45,52 +45,21 @@ plt.tight_layout()
 plt.savefig("plots/task1.pdf")
 
 # %%
-# plot the distribution during the timesteps
-x_data = np.genfromtxt("data/task1_x.csv", delimiter=",")
+# plot the histogram
 
-i_step = x_data[:,0]
-x_2d = x_data[:,1:]
+x_left, x_right, x_center, bin_density = np.genfromtxt("data/task1_x_hist.csv", delimiter=",", unpack=True)
 
-i_step_2d = np.tile(i_step,(x_2d.shape[1],1)).T
-
-mask = ~np.isnan(x_2d.flatten())
-x = x_2d.flatten()[mask]
-i_step = i_step_2d.flatten()[mask]
-
-tau = i_step*dtau
-# %%
-fig, axs = plt.subplots(1,2, gridspec_kw={"width_ratios":[0.8,0.2]}, figsize=(10,4), sharey=True)
-# plot the evolution of the distribution
-plt.sca(axs[0])
-plt.hist2d(tau, x, bins=(x_2d.shape[0], 40), rasterized=True)
-plt.axvline(n_eq_steps*dtau, color="white", alpha=0.7, linestyle="--")
-plt.xlabel(r"$\tau \: / \:$ a.u.")
-plt.ylabel(r"$x \: / \:$ a.u.")
-
-x_min = x.min()
-x_max = x.max()
+x_min = x_left[0]
+x_max = x_right[-1]
 
 x_lin = np.linspace(x_min, x_max, 1000)
 phi0 = np.sqrt(2) * np.exp(-np.exp(-x_lin)-x_lin/2)
 
-mask2 = i_step>=n_eq_steps
-weights = 1./N[i_step.astype(int)]
-
-mean_hist, bin_edges = np.histogram(x[mask2], bins=100, weights=weights[mask2], density=True)
-bin_centers = (bin_edges[:-1]+bin_edges[1:])/2
-
-#mean_hist = 
-plt.sca(axs[1])
-plt.plot(phi0,x_lin)
-plt.hist(bin_centers, bins=bin_edges, weights=mean_hist, orientation="horizontal")
-plt.xlabel("$\Phi_0$")
-plt.ylabel(r"$x \: / \:$ a.u.")
-axs[1].yaxis.set_tick_params(labelright=True)
-axs[1].yaxis.tick_right()
-axs[1].yaxis.set_label_position("right")
-
+plt.figure(figsize=(5,4))
+plt.plot(x_center, bin_density, label=f"histogram (integral={np.trapz(bin_density,x_center):.4f})")
+plt.plot(x_lin, phi0**2, label=f"exact (integral={np.trapz(phi0**2,x_lin):.4f})")
+plt.ylabel("$\Phi_0^2$")
+plt.xlabel(r"$x \: / \:$ a.u.")
+plt.legend()
 plt.tight_layout()
-plt.savefig("plots/task1_dist.pdf")
-
-
-# %%
+plt.savefig("plots/task1_x_hist.pdf")

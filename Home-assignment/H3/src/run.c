@@ -16,7 +16,7 @@ void task1(gsl_rng* rng) {
     printf("Perform Task 1...\n");
     // initialize walkers
     int N0 = 200; // initial number of walkers
-    int N_max = 3*N0; // maximum number of walkers
+    int N_max = 10*N0; // maximum number of walkers
     double x_min = -5;
     double x_max = 5;
     double dx = (x_max - x_min)/(N0-1);
@@ -37,17 +37,23 @@ void task1(gsl_rng* rng) {
     double gamma = 0.5;
     double dtau = 0.02;
     double sqrt_dtau = sqrt(dtau);
-    int n_eq_steps = 750;
-    int n_prod_steps = 3250;
+    int n_eq_steps = 10000;
+    int n_prod_steps = 100000;
     int n_steps = n_eq_steps + n_prod_steps; // plus the step 0
+
+    // x histogram constants
+    x_min = -4;
+    x_max = 10;
+    int n_bins = 100;
+    double x_bin_width = (x_max-x_min)/n_bins;
+    int* bin_counts = (int*)calloc(n_bins, sizeof(int));
+    int total_bin_count = 0;
 
     int* N_arr = (int*)malloc((n_steps+1)*sizeof(int));
     double* E_T_arr = (double*)malloc((n_steps+1)*sizeof(double));
-    double** x_arr = create_2D_array(n_steps+1, N_max);
 
     N_arr[0] = N;
     E_T_arr[0] = E_T;
-    constant_multiplication(x_arr[0], x, 1., N_max);
 
     double E_T_sum = E_T; // sum all previous E_T for the cummulative average
     // we need a temporary array of walkers in each step
@@ -56,6 +62,7 @@ void task1(gsl_rng* rng) {
 
     // do diffusion monte carlo without importance sampling
     // step through imaginary time 
+    print_progress(0,0,n_steps, true);
     for (int i_step=1; i_step<n_steps+1; i_step++) {
         int i_temp = 0;
         for (int i_walker=0; i_walker<N; i_walker++) {
@@ -103,7 +110,19 @@ void task1(gsl_rng* rng) {
         // save the results
         N_arr[i_step] = N;
         E_T_arr[i_step] = E_T;
-        constant_multiplication(x_arr[i_step], x, 1., N_max);
+
+        // construct the historgram
+        if (i_step >= n_eq_steps+1) {
+            for (int i_walker=0; i_walker<N; i_walker++) {
+                if (x[i_walker]<x_min || x[i_walker]>=x_max) {
+                    continue;
+                }
+                int i_bin = (int)((x[i_walker]-x_min)/x_bin_width);
+                bin_counts[i_bin]++;
+                total_bin_count++;
+            }
+        }
+        print_progress(i_step,0,n_steps,false);
     }
 
     printf("Save results of Task 1...\n");
@@ -116,19 +135,16 @@ void task1(gsl_rng* rng) {
         fprintf(file, "%i, %.10f, %i, %.10f\n", i_step, tau, N_arr[i_step], E_T_arr[i_step]);
     }
     fclose(file);
-    file = fopen("data/task1_x.csv", "w");
-    fprintf(file, "# {\"gamma\":%.5e, \"dtau\":%.5e, \"n_eq_steps\":%i}\n", gamma, dtau, n_eq_steps);
-    fprintf(file, "# i_step");
-    for (int i_walker=0; i_walker<N_max; i_walker++) {
-        fprintf(file, ", x_%06i", i_walker);
-    }
-    fprintf(file, "\n");
-    for (int i_step=0; i_step<n_steps+1; i_step++) {
-        fprintf(file, "%8i", i_step);
-        for (int i_walker=0; i_walker<N_max; i_walker++) {
-            fprintf(file, ", %8.5f", x_arr[i_step][i_walker]);
-        }
-        fprintf(file, "\n");
+
+    // save the histogram
+    file = fopen("data/task1_x_hist.csv", "w");
+    fprintf(file, "# x_left, x_right, x_center, bin_density\n");
+    for (int i_bin=0; i_bin<n_bins; i_bin++) {
+        double x_left = x_min + i_bin*x_bin_width;
+        double x_right = x_left + x_bin_width;
+        double x_center = (x_left+x_right)/2;
+        double bin_density = bin_counts[i_bin]/(x_bin_width*total_bin_count);
+        fprintf(file, "%.5f, %.5f, %.5f, %.5f\n", x_left, x_right, x_center, bin_density);
     }
     fclose(file);
 
@@ -136,7 +152,7 @@ void task1(gsl_rng* rng) {
     free(temp_x);
     free(N_arr);
     free(E_T_arr);
-    destroy_2D_array(x_arr);
+    free(bin_counts);
 }
 
 void init_helium_walker(double* pos, gsl_rng* rng) {
