@@ -181,55 +181,6 @@ double V_helium(double* R) {
     return - 2/r1 - 2/r2 + 1/r12;
 }
 
-void calc_v_F(double* R, double* v_F, double alpha) {
-    double temp[3];
-    double temp2[3];
-
-    double r1[3] = {R[0], R[1], R[2]};
-    double r2[3] = {R[3], R[4], R[5]};
-
-    double r12[3];
-    constant_multiplication(temp, r1, -1., 3);
-    elementwise_addition(r12, r2, temp, 3);
-
-    double r12_len = vector_norm(r12, 3);
-    normalize_vector(r12, 3);
-
-    constant_multiplication(temp, r1, -2., 3);
-    constant_multiplication(temp2, r12, -1/(2*(1 + alpha*r12_len)*(1 + alpha*r12_len)), 3);
-    elementwise_addition(v_F, temp, temp2, 3);
-
-    constant_multiplication(temp, r2, -2., 3);
-    constant_multiplication(temp2, r12, +1/(2*(1 + alpha*r12_len)*(1 + alpha*r12_len)), 3);
-    elementwise_addition(v_F+3, temp, temp2, 3);
-}
-
-void perform_drift_part_1st_order(double* R, double alpha, double dtau) {
-    double v_F[6];
-    double temp[6];
-
-    calc_v_F(R, v_F, alpha);
-
-    constant_multiplication(temp, v_F, dtau, 6);
-    elementwise_addition(R, temp, R, 6);
-}
-
-void perform_drift_part_2nd_order(double* R, double alpha, double dtau) {
-    double R_half[6];
-    double v_F[6];
-    double temp[6];
-
-    // calculate R_1/2
-    calc_v_F(R, v_F, alpha);
-    constant_multiplication(temp, v_F, dtau/2, 6);
-    elementwise_addition(R_half, temp, R, 6);
-
-    // calculate R
-    calc_v_F(R_half, v_F, alpha);
-    constant_multiplication(temp, v_F, dtau/2, 6);
-    elementwise_addition(R, temp, R, 6);
-}
-
 double E_L(double* R, double alpha) {
     double temp[3];
     double temp2[3];
@@ -261,10 +212,121 @@ double E_L(double* R, double alpha) {
     return res;
 }
 
+void perform_diffusive_part(double** R, int N, double dtau, gsl_rng* rng) {
+    for (int i_walker=0; i_walker<N; i_walker++) {
+    for (int i_coord=0; i_coord<6; i_coord++) {
+        R[i_walker][i_coord] = R[i_walker][i_coord] + sqrt(dtau)*gsl_ran_gaussian(rng, 1);
+    }
+    }
+}
+
+int perform_reactive_part(double** R, int N, int N_max, 
+                        bool importance_sampling, double E_T, double dtau, 
+                        double alpha, gsl_rng* rng) {
+    int i_temp = 0;
+    double** temp_R = create_2D_array(N_max, 6);
+    for (int i_walker=0; i_walker<N; i_walker++) {
+        // reactive part
+        double W;
+        if (importance_sampling) {
+            W = exp(-(E_L(R[i_walker], alpha) - E_T)*dtau);
+        } else {
+            W = exp(-(V_helium(R[i_walker]) - E_T)*dtau);
+        }
+
+        int m = (int)(W + gsl_rng_uniform(rng));
+
+        // sometimes N explodes and we want to prevent this
+        if (m>N/2.) {
+            printf("WARNING: m = %i for walker %i/%i\n",m,i_walker, N);
+            m = 100;
+        }
+
+        // copy the walker m times into temp_x for the next step
+        for (int i_copy=0; i_copy<m; i_copy++) {
+            for (int i_coord=0; i_coord<6; i_coord++) {
+                temp_R[i_temp][i_coord] = R[i_walker][i_coord];
+            }
+            i_temp++;
+
+            if (i_temp >= N_max) {
+                printf("ERROR: there are too many walkers!\n");
+                exit(1);
+            }
+        }
+    }
+    N = i_temp;
+    // copy temp_R to R so that we have the new list of walkers
+    for (int i_walker=0; i_walker<N; i_walker++) {
+        for (int i_coord=0; i_coord<6; i_coord++) {
+            R[i_walker][i_coord] = temp_R[i_walker][i_coord];
+        }
+    }
+
+    destroy_2D_array(temp_R);
+    return N;
+}
+
+void calc_v_F(double* R, double* v_F, double alpha) {
+    double temp[3];
+    double temp2[3];
+
+    double r1[3] = {R[0], R[1], R[2]};
+    double r2[3] = {R[3], R[4], R[5]};
+
+    double r12[3];
+    constant_multiplication(temp, r1, -1., 3);
+    elementwise_addition(r12, r2, temp, 3);
+
+    double r12_len = vector_norm(r12, 3);
+    normalize_vector(r12, 3);
+
+    normalize_vector(r1,3);
+    normalize_vector(r2,3);
+
+    constant_multiplication(temp, r1, -2., 3);
+    constant_multiplication(temp2, r12, -1/(2*(1 + alpha*r12_len)*(1 + alpha*r12_len)), 3);
+    elementwise_addition(v_F, temp, temp2, 3);
+
+    constant_multiplication(temp, r2, -2., 3);
+    constant_multiplication(temp2, r12, +1/(2*(1 + alpha*r12_len)*(1 + alpha*r12_len)), 3);
+    elementwise_addition(v_F+3, temp, temp2, 3);
+}
+
+void perform_drift_part_1st_order(double** R, int N, double alpha, double dtau) {
+    for (int i_walker=0; i_walker<N; i_walker++) {
+        double v_F[6];
+        double temp[6];
+
+        calc_v_F(R[i_walker], v_F, alpha);
+
+        constant_multiplication(temp, v_F, dtau, 6);
+        elementwise_addition(R[i_walker], temp, R[i_walker], 6);
+    }
+}
+
+void perform_drift_part_2nd_order(double** R, int N, double alpha, double dtau) {
+    for (int i_walker=0; i_walker<N; i_walker++) {
+        double R_half[6];
+        double v_F[6];
+        double temp[6];
+
+        // calculate R_1/2
+        calc_v_F(R[i_walker], v_F, alpha);
+        constant_multiplication(temp, v_F, dtau/2, 6);
+        elementwise_addition(R_half, temp, R[i_walker], 6);
+
+        // calculate R
+        calc_v_F(R_half, v_F, alpha);
+        constant_multiplication(temp, v_F, dtau/2, 6);
+        elementwise_addition(R[i_walker], temp, R[i_walker], 6);
+    }
+}
+
 
 // perform the diffusion monte carlo for the helium
 void perform_diffusion_monte_carlo(gsl_rng* rng, 
-                        bool importance_sampling, bool first_order,
+                        bool importance_sampling, bool first_order, bool show_progress,
                         double** R0, int N0, int N_max,
                         double E_T0, double gamma, double dtau, double alpha,
                         int n_eq_steps, int n_prod_steps,
@@ -284,65 +346,32 @@ void perform_diffusion_monte_carlo(gsl_rng* rng,
     int N = N0;
     double E_T = E_T0;
     double E_T_sum = E_T; // sum all previous E_T for the cummulative average
-    double sqrt_dtau = sqrt(dtau);
     N_arr[0] = N;
     E_T_arr[0] = E_T;
 
     int n_steps = n_eq_steps + n_prod_steps;
     
+    if (show_progress) {
+        print_progress(0, 0, n_steps, true);
+    }
+
     // do diffusion monte carlo, step through imaginary time 
     for (int i_step=1; i_step<n_steps+1; i_step++) {
-        int i_temp = 0;
-        for (int i_walker=0; i_walker<N; i_walker++) {
-            
-            // drift part
+        if (first_order) {
             if (importance_sampling) {
-                if (first_order) {
-                    perform_drift_part_1st_order(R[i_walker], alpha, dtau);
-                } else {
-                    perform_drift_part_2nd_order(R[i_walker], alpha, dtau);
-                }
+                perform_drift_part_1st_order(R,N,alpha,dtau);
             }
-
-            // diffusive part
-            for (int i_coord=0; i_coord<6; i_coord++) {
-                R[i_walker][i_coord] = R[i_walker][i_coord] + sqrt_dtau*gsl_ran_gaussian(rng, 1);
-            }
-
-            // reactive part
-            double W;
+            perform_diffusive_part(R,N,dtau,rng);
+            N = perform_reactive_part(R, N, N_max, importance_sampling, E_T, dtau, alpha, rng);
+        } else {
             if (importance_sampling) {
-                W = exp(-(E_L(R[i_walker], alpha) - E_T)*dtau);
-            } else {
-                W = exp(-(V_helium(R[i_walker]) - E_T)*dtau);
+                perform_drift_part_2nd_order(R,N,alpha,dtau/2);
             }
-
-            int m = (int)(W + gsl_rng_uniform(rng));
-
-            // sometimes N explodes and we want to prevent this
-            if (m>N/2.) {
-                printf("WARNING: m = %i in step %i for walker %i/%i\n",m,i_step,i_walker, N);
-                m = 100;
-            }
-
-            // copy the walker m times into temp_x for the next step
-            for (int i_copy=0; i_copy<m; i_copy++) {
-                for (int i_coord=0; i_coord<6; i_coord++) {
-                    temp_R[i_temp][i_coord] = R[i_walker][i_coord];
-                }
-                i_temp++;
-
-                if (i_temp >= N_max) {
-                    printf("ERROR: there are too many walkers!\n");
-                    exit(1);
-                }
-            }
-        }
-        N = i_temp;
-        // copy temp_R to R so that we have the new list of walkers
-        for (int i_walker=0; i_walker<N; i_walker++) {
-            for (int i_coord=0; i_coord<6; i_coord++) {
-                R[i_walker][i_coord] = temp_R[i_walker][i_coord];
+            perform_diffusive_part(R,N,dtau/2,rng);
+            N = perform_reactive_part(R, N, N_max, importance_sampling, E_T, dtau, alpha, rng);
+            perform_diffusive_part(R,N,dtau/2,rng);
+            if (importance_sampling) {
+                perform_drift_part_2nd_order(R,N,alpha,dtau/2);
             }
         }
 
@@ -363,6 +392,10 @@ void perform_diffusion_monte_carlo(gsl_rng* rng,
         // save the results
         N_arr[i_step] = N;
         E_T_arr[i_step] = E_T;
+
+        if (show_progress) {
+            print_progress(i_step, 0, n_steps, false);
+        }
     }
 
     *N_out = N;
@@ -419,6 +452,7 @@ run(
     int n_steps = n_eq_steps+n_prod_steps;
     bool importance_sampling = false;
     bool first_order = true;
+    bool show_progress = true;
 
     char* filepath = "data/task2.csv";
 
@@ -432,7 +466,7 @@ run(
     int* N_arr = (int*)malloc((n_steps+1)*sizeof(int));
     double* E_T_arr = (double*)malloc((n_steps+1)*sizeof(double));
 
-    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress,
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
                                 n_eq_steps, n_prod_steps, 
                                 R0, &N0, &E_T0,
@@ -465,7 +499,7 @@ run(
     N_arr = (int*)malloc((n_steps+1)*sizeof(int));
     E_T_arr = (double*)malloc((n_steps+1)*sizeof(double));
 
-    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress, 
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
                                 n_eq_steps, n_prod_steps, 
                                 R0, &N0, &E_T0,
@@ -479,7 +513,7 @@ run(
     first_order = false;
     filepath = "data/task3_2nd_order.csv";
     
-    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+    perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress, 
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
                                 n_eq_steps, n_prod_steps, 
                                 R0, &N0, &E_T0,
@@ -511,6 +545,7 @@ run(
     double* E_T_std_2nd_order = (double*)malloc(n_dtau*sizeof(double));
 
     print_progress(0, 0, n_dtau, true);
+    printf("\n");
     for (int i=0; i<n_dtau; i++) {
         dtau = dtau_arr[i];
         n_eq_steps = 100/dtau;
@@ -521,7 +556,7 @@ run(
         E_T_arr = (double*)malloc((n_steps+1)*sizeof(double));
 
         first_order = true;
-        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress, 
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
                                 n_eq_steps, n_prod_steps, 
                                 R0, &N0, &E_T0,
@@ -529,7 +564,7 @@ run(
         E_T_1st_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
         E_T_std_1st_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
         first_order = false;
-        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, 
+        perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress, 
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
                                 n_eq_steps, n_prod_steps, 
                                 R0, &N0, &E_T0,
@@ -540,6 +575,7 @@ run(
         free(N_arr);
         free(E_T_arr);
         print_progress(i+1,0,n_dtau, false);
+        printf("\n");
     }
 
     // save task 4 results
