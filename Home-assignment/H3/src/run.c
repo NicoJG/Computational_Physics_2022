@@ -318,7 +318,7 @@ void perform_drift_part_2nd_order(double** R, int N, double alpha, double dtau) 
 
         // calculate R
         calc_v_F(R_half, v_F, alpha);
-        constant_multiplication(temp, v_F, dtau/2, 6);
+        constant_multiplication(temp, v_F, dtau, 6);
         elementwise_addition(R[i_walker], temp, R[i_walker], 6);
     }
 }
@@ -536,13 +536,15 @@ run(
     alpha = 0.15;
     importance_sampling = true;
 
-    double dtau_arr[] = {0.05, 0.1, 0.15, 0.2, 0.3, 0.4}; 
+    double dtau_arr[] = {0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4}; 
     int n_dtau = sizeof(dtau_arr)/sizeof(double);
 
     double* E_T_1st_order = (double*)malloc(n_dtau*sizeof(double));
     double* E_T_2nd_order = (double*)malloc(n_dtau*sizeof(double));
     double* E_T_std_1st_order = (double*)malloc(n_dtau*sizeof(double));
     double* E_T_std_2nd_order = (double*)malloc(n_dtau*sizeof(double));
+    int* N0_1st_order = (int*)malloc(n_dtau*sizeof(int));
+    int* N0_2nd_order = (int*)malloc(n_dtau*sizeof(int));
 
     print_progress(0, 0, n_dtau, true);
     printf("\n");
@@ -563,6 +565,7 @@ run(
                                 N_arr, E_T_arr);
         E_T_1st_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
         E_T_std_1st_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
+        N0_1st_order[i] = N0;
         first_order = false;
         perform_diffusion_monte_carlo(rng, importance_sampling, first_order, show_progress, 
                                 R0, N0, N_max, E_T0, gamma, dtau, alpha,
@@ -571,6 +574,7 @@ run(
                                 N_arr, E_T_arr);
         E_T_2nd_order[i] = average(E_T_arr+n_eq_steps, n_prod_steps);
         E_T_std_2nd_order[i] = standard_deviation(E_T_arr+n_eq_steps, n_prod_steps);
+        N0_2nd_order[i] = N0;
 
         free(N_arr);
         free(E_T_arr);
@@ -580,9 +584,9 @@ run(
 
     // save task 4 results
     FILE* file = fopen("data/task4.csv", "w");
-    fprintf(file, "# dtau, E_T_1st_order, E_T_std_1st_order, E_T_2nd_order, E_T_std_2nd_order\n");
+    fprintf(file, "# dtau, E_T_1st_order, E_T_std_1st_order, E_T_2nd_order, E_T_std_2nd_order, N0_1st_order, N0_2nd_order\n");
     for (int i=0; i<n_dtau; i++) {
-        fprintf(file, "%.5f, %.5f, %.5f, %.5f, %.5f\n", dtau_arr[i], E_T_1st_order[i], E_T_std_1st_order[i], E_T_2nd_order[i], E_T_std_2nd_order[i]);
+        fprintf(file, "%.5f, %.5f, %.5f, %.5f, %.5f, %i, %i\n", dtau_arr[i], E_T_1st_order[i], E_T_std_1st_order[i], E_T_2nd_order[i], E_T_std_2nd_order[i], N0_1st_order[i], N0_2nd_order[i]);
     }
     fclose(file);
     
@@ -590,6 +594,8 @@ run(
     free(E_T_std_1st_order);
     free(E_T_2nd_order);
     free(E_T_std_2nd_order);
+    free(N0_1st_order);
+    free(N0_2nd_order);
     gsl_rng_free(rng);
     destroy_2D_array(R0);
     return 0;
