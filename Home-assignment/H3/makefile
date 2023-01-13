@@ -27,9 +27,11 @@ CFLAGS += $(CFLAGS_OPT)
 endif
 
 H3: obj _H3
+	./H3
+	python H3.py
 
 _H3: $(MAIN) $(OBJ)
-	$(CC) $(CFLAGS) $^ -o H1 $(LIB)
+	$(CC) $(CFLAGS) $^ -o H3 $(LIB)
 
 obj/%.o: src/%.c
 	$(CC) -MMD -c $(CFLAGS) $< -o $@ 
